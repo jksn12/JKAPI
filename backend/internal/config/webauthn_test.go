@@ -19,9 +19,9 @@ func TestValidateWebAuthnConfig(t *testing.T) {
 			configure: func(cfg *Config) {
 				cfg.WebAuthn = WebAuthnConfig{
 					Enabled:       true,
-					RPDisplayName: "Sub2API",
-					RPID:          "sub2api.example.com",
-					RPOrigins:     []string{"https://sub2api.example.com"},
+					RPDisplayName: "JKAPI",
+					RPID:          "jkapi.example.com",
+					RPOrigins:     []string{"https://jkapi.example.com"},
 				}
 			},
 		},
@@ -30,7 +30,7 @@ func TestValidateWebAuthnConfig(t *testing.T) {
 			configure: func(cfg *Config) {
 				cfg.WebAuthn = WebAuthnConfig{
 					Enabled:       true,
-					RPDisplayName: "Sub2API Dev",
+					RPDisplayName: "JKAPI Dev",
 					RPID:          "localhost",
 					RPOrigins:     []string{"http://localhost:5173"},
 				}
@@ -41,8 +41,8 @@ func TestValidateWebAuthnConfig(t *testing.T) {
 			configure: func(cfg *Config) {
 				cfg.WebAuthn = WebAuthnConfig{
 					Enabled:       true,
-					RPDisplayName: "Sub2API",
-					RPOrigins:     []string{"https://sub2api.example.com"},
+					RPDisplayName: "JKAPI",
+					RPOrigins:     []string{"https://jkapi.example.com"},
 				}
 			},
 			wantError: "webauthn.rp_id",
@@ -52,9 +52,9 @@ func TestValidateWebAuthnConfig(t *testing.T) {
 			configure: func(cfg *Config) {
 				cfg.WebAuthn = WebAuthnConfig{
 					Enabled:       true,
-					RPDisplayName: "Sub2API",
-					RPID:          "https://sub2api.example.com",
-					RPOrigins:     []string{"https://sub2api.example.com"},
+					RPDisplayName: "JKAPI",
+					RPID:          "https://jkapi.example.com",
+					RPOrigins:     []string{"https://jkapi.example.com"},
 				}
 			},
 			wantError: "domain without scheme",
@@ -64,9 +64,9 @@ func TestValidateWebAuthnConfig(t *testing.T) {
 			configure: func(cfg *Config) {
 				cfg.WebAuthn = WebAuthnConfig{
 					Enabled:       true,
-					RPDisplayName: "Sub2API",
-					RPID:          "sub2api.example.com",
-					RPOrigins:     []string{"http://sub2api.example.com"},
+					RPDisplayName: "JKAPI",
+					RPID:          "jkapi.example.com",
+					RPOrigins:     []string{"http://jkapi.example.com"},
 				}
 			},
 			wantError: "must use HTTPS",
@@ -76,7 +76,7 @@ func TestValidateWebAuthnConfig(t *testing.T) {
 			configure: func(cfg *Config) {
 				cfg.WebAuthn = WebAuthnConfig{
 					Enabled:       true,
-					RPDisplayName: "Sub2API",
+					RPDisplayName: "JKAPI",
 					RPID:          "example.com",
 					RPOrigins:     []string{"https://example.net"},
 				}

@@ -20,10 +20,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/httpclient"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/servertiming"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
+	"github.com/jksn12/JKAPI/internal/pkg/httpclient"
+	"github.com/jksn12/JKAPI/internal/pkg/pagination"
+	"github.com/jksn12/JKAPI/internal/pkg/servertiming"
 )
 
 const (
@@ -2067,11 +2067,11 @@ func contentModerationEmailVariables(log *ContentModerationLog, cfg *ContentMode
 
 func (s *ContentModerationService) siteName(ctx context.Context) string {
 	if s == nil || s.settingRepo == nil {
-		return "Sub2API"
+		return "JKAPI"
 	}
 	name, err := s.settingRepo.GetValue(ctx, SettingKeySiteName)
 	if err != nil || strings.TrimSpace(name) == "" {
-		return "Sub2API"
+		return "JKAPI"
 	}
 	return strings.TrimSpace(name)
 }

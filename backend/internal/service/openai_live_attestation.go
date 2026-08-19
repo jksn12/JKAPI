@@ -12,7 +12,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/jksn12/JKAPI/internal/config"
 )
 
 const liveAttestationHeader = "x-oai-attestation"
@@ -26,7 +26,7 @@ func newLiveAttestationCipher(cfg *config.Config) SecretEncryptor {
 		return nil
 	}
 	return &liveAttestationAES{
-		key: sha256.Sum256([]byte("sub2api/live-attestation/v1\x00" + cfg.JWT.Secret)),
+		key: sha256.Sum256([]byte("jkapi/live-attestation/v1\x00" + cfg.JWT.Secret)),
 	}
 }
 
@@ -73,7 +73,7 @@ func (c *liveAttestationAES) Decrypt(ciphertext string) (string, error) {
 func (s *OpenAIGatewayService) prepareLiveAttestation(ctx context.Context) (string, string, error) {
 	if s == nil || s.liveAttestation == nil {
 		return "", "", &LiveAttestationUnavailableError{
-			Reason: "Sub2API has no platform DeviceCheck provider",
+			Reason: "JKAPI has no platform DeviceCheck provider",
 		}
 	}
 	if s.liveAttestationCipher == nil {

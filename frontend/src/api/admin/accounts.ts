@@ -150,7 +150,7 @@ export async function create(accountData: CreateAccountRequest): Promise<Account
 const duplicateOperationKeys = new Map<number, string>()
 
 function duplicateOperationStorageKey(id: number): string {
-  return `sub2api:admin:account-duplicate:${id}`
+  return `jkapi:admin:account-duplicate:${id}`
 }
 
 function getStoredDuplicateOperationKey(id: number): string | null {

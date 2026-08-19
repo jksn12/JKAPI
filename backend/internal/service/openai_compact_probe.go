@@ -160,7 +160,7 @@ func mergeExtraUpdates(base map[string]any, more map[string]any) map[string]any 
 // 账号级稳定派生：重复探测复用同一会话，而不是每次新开一个。
 func compactProbeSessionID(accountID int64) string {
 	if accountID <= 0 {
-		return deriveStableUUIDv4("sub2api:codex-compact-probe:v1:anonymous")
+		return deriveStableUUIDv4("jkapi:codex-compact-probe:v1:anonymous")
 	}
-	return deriveStableUUIDv4("sub2api:codex-compact-probe:v1:" + strconv.FormatInt(accountID, 10))
+	return deriveStableUUIDv4("jkapi:codex-compact-probe:v1:" + strconv.FormatInt(accountID, 10))
 }

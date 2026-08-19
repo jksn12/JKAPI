@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
+	"github.com/jksn12/JKAPI/internal/config"
+	"github.com/jksn12/JKAPI/internal/pkg/logger"
 )
 
 type runtimeSettingRepoStub struct {
@@ -120,7 +120,7 @@ func TestUpdateRuntimeLogConfig_InvalidConfigShouldNotApply(t *testing.T) {
 	if err := logger.Init(logger.InitOptions{
 		Level:       "info",
 		Format:      "json",
-		ServiceName: "sub2api",
+		ServiceName: "jkapi",
 		Environment: "test",
 		Output: logger.OutputOptions{
 			ToStdout: true,
@@ -190,7 +190,7 @@ func TestResetRuntimeLogConfig_ShouldFallbackToBaseline(t *testing.T) {
 	if err := logger.Init(logger.InitOptions{
 		Level:       "debug",
 		Format:      "json",
-		ServiceName: "sub2api",
+		ServiceName: "jkapi",
 		Environment: "test",
 		Output: logger.OutputOptions{
 			ToStdout: true,
@@ -300,7 +300,7 @@ func TestUpdateRuntimeLogConfig_PersistFailureRollback(t *testing.T) {
 	if err := logger.Init(logger.InitOptions{
 		Level:       "info",
 		Format:      "json",
-		ServiceName: "sub2api",
+		ServiceName: "jkapi",
 		Environment: "test",
 		Output: logger.OutputOptions{
 			ToStdout: true,
@@ -352,7 +352,7 @@ func TestApplyRuntimeLogConfigOnStartup(t *testing.T) {
 	if err := logger.Init(logger.InitOptions{
 		Level:       "info",
 		Format:      "json",
-		ServiceName: "sub2api",
+		ServiceName: "jkapi",
 		Environment: "test",
 		Output: logger.OutputOptions{
 			ToStdout: true,
@@ -508,7 +508,7 @@ func TestUpdateRuntimeLogConfig_Success(t *testing.T) {
 	if err := logger.Init(logger.InitOptions{
 		Level:       "info",
 		Format:      "json",
-		ServiceName: "sub2api",
+		ServiceName: "jkapi",
 		Environment: "test",
 		Output: logger.OutputOptions{
 			ToStdout: true,

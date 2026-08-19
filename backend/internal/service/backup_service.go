@@ -20,9 +20,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
+	"github.com/jksn12/JKAPI/internal/config"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
+	"github.com/jksn12/JKAPI/internal/pkg/logger"
 )
 
 const (
@@ -765,7 +765,7 @@ func (s *BackupService) createCompressedBackupFile(ctx context.Context) (string,
 	if err != nil {
 		return "", 0, fmt.Errorf("pg_dump: %w", err)
 	}
-	archive, err := os.CreateTemp("", "sub2api-backup-*.sql.gz")
+	archive, err := os.CreateTemp("", "jkapi-backup-*.sql.gz")
 	if err != nil {
 		_ = dumpReader.Close()
 		return "", 0, fmt.Errorf("create backup archive: %w", err)
@@ -1066,7 +1066,7 @@ func (s *BackupService) downloadBackupParts(ctx context.Context, objectStore Bac
 		}
 	}
 
-	archive, err := os.CreateTemp("", "sub2api-restore-*.sql.gz")
+	archive, err := os.CreateTemp("", "jkapi-restore-*.sql.gz")
 	if err != nil {
 		return "", fmt.Errorf("create restore archive: %w", err)
 	}

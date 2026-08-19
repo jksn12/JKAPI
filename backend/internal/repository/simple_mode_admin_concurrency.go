@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/setting"
-	dbuser "github.com/Wei-Shaw/sub2api/ent/user"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	dbent "github.com/jksn12/JKAPI/ent"
+	"github.com/jksn12/JKAPI/ent/setting"
+	dbuser "github.com/jksn12/JKAPI/ent/user"
+	"github.com/jksn12/JKAPI/internal/service"
 )
 
 const (

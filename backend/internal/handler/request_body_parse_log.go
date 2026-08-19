@@ -3,7 +3,7 @@ package handler
 import (
 	"strconv"
 
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/jksn12/JKAPI/internal/service"
 	"go.uber.org/zap"
 )
 

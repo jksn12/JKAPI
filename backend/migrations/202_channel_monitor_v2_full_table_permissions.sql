@@ -1,6 +1,6 @@
 -- Extend privileges for all Channel Monitor V2 tables (base + rollup + config).
 -- Grant to the migration/application role rather than the historical hard-coded
--- "sub2api" role so custom DATABASE_USER deployments work as expected.
+-- "jkapi" role so custom DATABASE_USER deployments work as expected.
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
     channel_monitor_v2_config,
     channel_monitor_v2_watermarks,

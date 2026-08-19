@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/Wei-Shaw/sub2api/ent/idempotencyrecord"
+	"github.com/jksn12/JKAPI/ent/idempotencyrecord"
 )
 
 // IdempotencyRecord is the model entity for the IdempotencyRecord schema.

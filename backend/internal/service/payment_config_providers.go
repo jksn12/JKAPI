@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/paymentorder"
-	"github.com/Wei-Shaw/sub2api/ent/paymentproviderinstance"
-	"github.com/Wei-Shaw/sub2api/internal/payment"
-	"github.com/Wei-Shaw/sub2api/internal/payment/provider"
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	dbent "github.com/jksn12/JKAPI/ent"
+	"github.com/jksn12/JKAPI/ent/paymentorder"
+	"github.com/jksn12/JKAPI/ent/paymentproviderinstance"
+	"github.com/jksn12/JKAPI/internal/payment"
+	"github.com/jksn12/JKAPI/internal/payment/provider"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
 )
 
 // validateProviderConfig runs the provider's constructor to surface config-level

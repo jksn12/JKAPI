@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
+	"github.com/jksn12/JKAPI/internal/pkg/logger"
 	coderws "github.com/coder/websocket"
 	"go.uber.org/zap"
 )

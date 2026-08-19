@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	middleware2 "github.com/jksn12/JKAPI/internal/server/middleware"
+	"github.com/jksn12/JKAPI/internal/service"
 
 	"github.com/gin-gonic/gin"
 )

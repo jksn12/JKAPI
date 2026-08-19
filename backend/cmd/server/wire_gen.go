@@ -8,16 +8,16 @@ package main
 
 import (
 	"context"
-	"github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/handler"
-	"github.com/Wei-Shaw/sub2api/internal/handler/admin"
-	"github.com/Wei-Shaw/sub2api/internal/payment"
-	"github.com/Wei-Shaw/sub2api/internal/repository"
-	"github.com/Wei-Shaw/sub2api/internal/securityaudit"
-	"github.com/Wei-Shaw/sub2api/internal/server"
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/jksn12/JKAPI/ent"
+	"github.com/jksn12/JKAPI/internal/config"
+	"github.com/jksn12/JKAPI/internal/handler"
+	"github.com/jksn12/JKAPI/internal/handler/admin"
+	"github.com/jksn12/JKAPI/internal/payment"
+	"github.com/jksn12/JKAPI/internal/repository"
+	"github.com/jksn12/JKAPI/internal/securityaudit"
+	"github.com/jksn12/JKAPI/internal/server"
+	"github.com/jksn12/JKAPI/internal/server/middleware"
+	"github.com/jksn12/JKAPI/internal/service"
 	"github.com/redis/go-redis/v9"
 	"log"
 	"net/http"
@@ -27,7 +27,7 @@ import (
 
 import (
 	_ "embed"
-	_ "github.com/Wei-Shaw/sub2api/ent/runtime"
+	_ "github.com/jksn12/JKAPI/ent/runtime"
 )
 
 // Injectors from wire.go:

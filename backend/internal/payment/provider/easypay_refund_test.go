@@ -9,7 +9,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
-	"github.com/Wei-Shaw/sub2api/internal/payment"
+	"github.com/jksn12/JKAPI/internal/payment"
 )
 
 func TestNormalizeEasyPayAPIBase(t *testing.T) {

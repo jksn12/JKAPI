@@ -1,0 +1,7 @@
+interface:
+  display_name: "JKAPI Admin"
+  short_description: "Manage JKAPI admin accounts and settings"
+  default_prompt: "Use $jkapi-admin to inspect and manage JKAPI backend accounts safely."
+
+policy:
+  allow_implicit_invocation: true

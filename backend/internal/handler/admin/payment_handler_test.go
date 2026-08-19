@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	dbent "github.com/jksn12/JKAPI/ent"
+	"github.com/jksn12/JKAPI/internal/service"
 )
 
 func TestSanitizeAdminPaymentOrderForResponseAddsCurrency(t *testing.T) {
@@ -62,7 +62,7 @@ func TestAdminSubscriptionPlansForResponseIncludesCompositeGroupInfo(t *testing.
 			ValidityDays: 30,
 			ValidityUnit: "days",
 			Features:     "OpenAI\nClaude\nGemini\nGrok",
-			ProductName:  "Sub2API",
+			ProductName:  "JKAPI",
 			ForSale:      true,
 			SortOrder:    1,
 			CreatedAt:    now,

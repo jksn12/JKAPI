@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
+	"github.com/jksn12/JKAPI/internal/pkg/xai"
 	"github.com/stretchr/testify/require"
 )
 

@@ -7,7 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
+	"github.com/jksn12/JKAPI/ent/predicate"
 )
 
 // AccountID applies equality check predicate on the "account_id" field. It's identical to AccountIDEQ.

@@ -16,8 +16,8 @@ import (
 	"sync"
 	"time"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/httpclient"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
+	"github.com/jksn12/JKAPI/internal/pkg/httpclient"
 	"golang.org/x/net/http2"
 	"golang.org/x/sync/singleflight"
 )

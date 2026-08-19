@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
 )
 
 const (

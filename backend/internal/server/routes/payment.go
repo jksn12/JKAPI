@@ -1,10 +1,10 @@
 package routes
 
 import (
-	"github.com/Wei-Shaw/sub2api/internal/handler"
-	"github.com/Wei-Shaw/sub2api/internal/handler/admin"
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/jksn12/JKAPI/internal/handler"
+	"github.com/jksn12/JKAPI/internal/handler/admin"
+	"github.com/jksn12/JKAPI/internal/server/middleware"
+	"github.com/jksn12/JKAPI/internal/service"
 
 	"github.com/gin-gonic/gin"
 )

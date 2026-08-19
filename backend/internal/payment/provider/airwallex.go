@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/payment"
+	"github.com/jksn12/JKAPI/internal/payment"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 )

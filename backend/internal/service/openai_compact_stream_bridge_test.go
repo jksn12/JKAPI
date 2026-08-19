@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/jksn12/JKAPI/internal/config"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
@@ -205,7 +205,7 @@ func TestHandleNonStreamingResponse_CompactClientStreamBridgesToSSE(t *testing.T
 	require.Equal(t, "resp_compact_json", result.responseID)
 }
 
-// 回归防护：path-based compact（Codex v1 unary 协议、链式 sub2api）未标记
+// 回归防护：path-based compact（Codex v1 unary 协议、链式 jkapi）未标记
 // client stream，必须保持 v0.1.146 以来的 JSON 写回行为。
 func TestHandleNonStreamingResponse_PathBasedCompactStaysJSON(t *testing.T) {
 	svc := newCompactBridgeTestService()
@@ -330,7 +330,7 @@ func TestHandlePassthroughSSEToJSON_CompactRawOutputItemDoneRepairsEmptyTerminal
 	require.Len(t, gjson.Get(events[1][1], "response.output").Array(), 1)
 }
 
-// path-based（Codex v1 unary、链式 sub2api）未标记 client stream：同一上游
+// path-based（Codex v1 unary、链式 jkapi）未标记 client stream：同一上游
 // 形态修补后仍按 JSON 写回，output 中必须包含 compaction item。
 func TestHandleSSEToJSON_PathBasedCompactRawOutputItemDoneRepairsJSON(t *testing.T) {
 	svc := newCompactBridgeTestService()

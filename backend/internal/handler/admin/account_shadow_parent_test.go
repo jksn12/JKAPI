@@ -3,8 +3,8 @@ package admin
 import (
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/handler/dto"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/jksn12/JKAPI/internal/handler/dto"
+	"github.com/jksn12/JKAPI/internal/service"
 	"github.com/stretchr/testify/require"
 )
 

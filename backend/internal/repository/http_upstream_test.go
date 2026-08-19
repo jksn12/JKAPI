@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/jksn12/JKAPI/internal/config"
+	"github.com/jksn12/JKAPI/internal/pkg/tlsfingerprint"
+	"github.com/jksn12/JKAPI/internal/service"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -228,7 +228,7 @@ func TestHTTPUpstreamDoAppliesGrokCLIIdentityBeforeOAuthRoundTrip(t *testing.T) 
 
 			req, err := http.NewRequest(http.MethodPost, "https://cli-chat-proxy.grok.com/v1/"+endpoint, nil)
 			require.NoError(t, err)
-			req.Header.Set("User-Agent", "sub2api-grok/1.0")
+			req.Header.Set("User-Agent", "jkapi-grok/1.0")
 
 			resp, err := svc.Do(req, "", accountID, 1)
 			require.NoError(t, err)
@@ -454,7 +454,7 @@ func TestApplyGrokCLIProxyHeaders(t *testing.T) {
 		t.Setenv("XAI_GROK_CLI_VERSION", "")
 		req, err := http.NewRequest(http.MethodPost, "https://cli-chat-proxy.grok.com/v1/responses", nil)
 		require.NoError(t, err)
-		req.Header.Set("User-Agent", "sub2api-grok/1.0")
+		req.Header.Set("User-Agent", "jkapi-grok/1.0")
 
 		applyGrokCLIProxyHeaders(req)
 
@@ -532,13 +532,13 @@ func TestApplyGrokCLIProxyHeaders(t *testing.T) {
 		t.Setenv("XAI_GROK_CLI_VERSION", "0.2.95")
 		req, err := http.NewRequest(http.MethodPost, "https://api.x.ai/v1/responses", nil)
 		require.NoError(t, err)
-		req.Header.Set("User-Agent", "sub2api-grok/1.0")
+		req.Header.Set("User-Agent", "jkapi-grok/1.0")
 
 		applyGrokCLIProxyHeaders(req)
 
 		require.Empty(t, req.Header.Get("x-grok-client-version"))
 		require.Empty(t, req.Header.Get("X-XAI-Token-Auth"))
-		require.Equal(t, "sub2api-grok/1.0", req.Header.Get("User-Agent"))
+		require.Equal(t, "jkapi-grok/1.0", req.Header.Get("User-Agent"))
 	})
 }
 

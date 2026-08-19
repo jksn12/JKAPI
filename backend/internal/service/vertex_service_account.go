@@ -16,9 +16,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyurl"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyutil"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/servertiming"
+	"github.com/jksn12/JKAPI/internal/pkg/proxyurl"
+	"github.com/jksn12/JKAPI/internal/pkg/proxyutil"
+	"github.com/jksn12/JKAPI/internal/pkg/servertiming"
 	"github.com/golang-jwt/jwt/v5"
 )
 

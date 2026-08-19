@@ -7,7 +7,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/jksn12/JKAPI/internal/config"
 	"github.com/stretchr/testify/require"
 )
 

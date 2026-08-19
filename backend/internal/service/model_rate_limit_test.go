@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
+	"github.com/jksn12/JKAPI/internal/pkg/ctxkey"
 	"github.com/stretchr/testify/require"
 )
 

@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
-	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
+	"github.com/jksn12/JKAPI/internal/pkg/response"
+	"github.com/jksn12/JKAPI/internal/server/middleware"
 	"github.com/gin-gonic/gin"
 )
 

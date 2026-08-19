@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/batchimageevent"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
+	"github.com/jksn12/JKAPI/ent/batchimageevent"
+	"github.com/jksn12/JKAPI/ent/predicate"
 )
 
 // BatchImageEventDelete is the builder for deleting a BatchImageEvent entity.

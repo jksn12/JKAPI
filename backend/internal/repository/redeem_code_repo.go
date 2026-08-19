@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/redeemcode"
-	"github.com/Wei-Shaw/sub2api/ent/user"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	dbent "github.com/jksn12/JKAPI/ent"
+	"github.com/jksn12/JKAPI/ent/redeemcode"
+	"github.com/jksn12/JKAPI/ent/user"
+	"github.com/jksn12/JKAPI/internal/pkg/pagination"
+	"github.com/jksn12/JKAPI/internal/service"
 
 	entsql "entgo.io/ent/dialect/sql"
 )

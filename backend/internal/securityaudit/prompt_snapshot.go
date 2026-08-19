@@ -21,7 +21,7 @@ var (
 	phonePattern  = regexp.MustCompile(`(?:\+?\d[\d\s().-]{8,}\d)`)
 )
 
-const promptAuditPrioritySeparator = "\x00SUB2API_PROMPT_AUDIT_PRIORITY_END\x00"
+const promptAuditPrioritySeparator = "\x00JKAPI_PROMPT_AUDIT_PRIORITY_END\x00"
 
 type promptSegment struct {
 	text string

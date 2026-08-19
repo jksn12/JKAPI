@@ -23,10 +23,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyurl"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyutil"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/servertiming"
-	"github.com/Wei-Shaw/sub2api/internal/util/urlvalidator"
+	"github.com/jksn12/JKAPI/internal/pkg/proxyurl"
+	"github.com/jksn12/JKAPI/internal/pkg/proxyutil"
+	"github.com/jksn12/JKAPI/internal/pkg/servertiming"
+	"github.com/jksn12/JKAPI/internal/util/urlvalidator"
 )
 
 // Transport 连接池默认配置

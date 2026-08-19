@@ -2,7 +2,7 @@
 package schema
 
 import (
-	"github.com/Wei-Shaw/sub2api/ent/schema/mixins"
+	"github.com/jksn12/JKAPI/ent/schema/mixins"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"

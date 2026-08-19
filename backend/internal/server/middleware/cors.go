@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/jksn12/JKAPI/internal/config"
 	"github.com/gin-gonic/gin"
 )
 

@@ -236,7 +236,7 @@ func resolveConvergedInstallationID(account *Account, seed string) string {
 	if seed == "" {
 		return ""
 	}
-	return deriveStableUUIDv4("sub2api:codex-install-id:v2:" + seed)
+	return deriveStableUUIDv4("jkapi:codex-install-id:v2:" + seed)
 }
 
 // resolveConvergedSessionID 返回账号级恒定的 session_id。
@@ -244,7 +244,7 @@ func resolveConvergedSessionID(seed string) string {
 	if seed == "" {
 		return ""
 	}
-	return deriveStableUUIDv4("sub2api:codex-session-id:v2:" + seed)
+	return deriveStableUUIDv4("jkapi:codex-session-id:v2:" + seed)
 }
 
 // resolveConvergedThreadID 按客户端原始 session-id 确定性派生 thread_id。
@@ -254,7 +254,7 @@ func resolveConvergedThreadID(seed, clientSessionID string) string {
 	if seed == "" || clientSessionID == "" {
 		return ""
 	}
-	return deriveStableUUIDv4("sub2api:codex-thread-id:v2:" + seed + ":" + clientSessionID)
+	return deriveStableUUIDv4("jkapi:codex-thread-id:v2:" + seed + ":" + clientSessionID)
 }
 
 // codexFingerprintIDs 收敛后的完整 ID 集合。

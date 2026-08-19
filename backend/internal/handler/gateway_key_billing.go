@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/timezone"
-	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/jksn12/JKAPI/internal/config"
+	"github.com/jksn12/JKAPI/internal/pkg/timezone"
+	middleware2 "github.com/jksn12/JKAPI/internal/server/middleware"
+	"github.com/jksn12/JKAPI/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,7 +31,7 @@ type keyBillingInfoResponse struct {
 }
 
 // KeyBillingInfo returns the token billing multiplier effective for the authenticated API key.
-// GET /v1/sub2api/billing
+// GET /v1/jkapi/billing
 func (h *GatewayHandler) KeyBillingInfo(c *gin.Context) {
 	apiKey, ok := middleware2.GetAPIKeyFromContext(c)
 	if !ok {
@@ -86,7 +86,7 @@ func buildKeyBillingInfo(apiKey *service.APIKey, resolvedRate float64, now time.
 	appliedPeak := apiKey.Group.PeakMultiplierAt(now)
 
 	response := keyBillingInfoResponse{
-		Object:                  "sub2api.key_billing",
+		Object:                  "jkapi.key_billing",
 		SchemaVersion:           keyBillingInfoSchemaVersion,
 		BillingScope:            "token",
 		GroupRateMultiplier:     groupRate,

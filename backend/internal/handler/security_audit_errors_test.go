@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/ctxkey"
-	"github.com/Wei-Shaw/sub2api/internal/securityaudit"
+	"github.com/jksn12/JKAPI/internal/pkg/ctxkey"
+	"github.com/jksn12/JKAPI/internal/securityaudit"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
@@ -128,7 +128,7 @@ func TestPromptGuardGeminiErrorEnvelopeGolden(t *testing.T) {
 		errorInfo := requireObject(t, details[0])
 		require.Equal(t, "type.googleapis.com/google.rpc.ErrorInfo", errorInfo["@type"])
 		require.Equal(t, decision.ErrorCode, errorInfo["reason"])
-		require.Equal(t, "sub2api.securityaudit", errorInfo["domain"])
+		require.Equal(t, "jkapi.securityaudit", errorInfo["domain"])
 		metadata := requireObject(t, errorInfo["metadata"])
 		require.Equal(t, map[string]any{"request_id": "request-error-golden"}, metadata)
 	}

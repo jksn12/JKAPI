@@ -26,14 +26,14 @@ import (
 	"golang.org/x/mod/semver"
 	"golang.org/x/net/http2"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyurl"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/proxyutil"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/servertiming"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
-	"github.com/Wei-Shaw/sub2api/internal/service"
-	"github.com/Wei-Shaw/sub2api/internal/util/urlvalidator"
+	"github.com/jksn12/JKAPI/internal/config"
+	"github.com/jksn12/JKAPI/internal/pkg/proxyurl"
+	"github.com/jksn12/JKAPI/internal/pkg/proxyutil"
+	"github.com/jksn12/JKAPI/internal/pkg/servertiming"
+	"github.com/jksn12/JKAPI/internal/pkg/tlsfingerprint"
+	"github.com/jksn12/JKAPI/internal/pkg/xai"
+	"github.com/jksn12/JKAPI/internal/service"
+	"github.com/jksn12/JKAPI/internal/util/urlvalidator"
 )
 
 // 默认配置常量

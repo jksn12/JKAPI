@@ -4,14 +4,14 @@ import (
 	"context"
 	"time"
 
-	dbent "github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/group"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
-	"github.com/Wei-Shaw/sub2api/ent/schema/mixins"
-	"github.com/Wei-Shaw/sub2api/ent/user"
-	"github.com/Wei-Shaw/sub2api/ent/usersubscription"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	dbent "github.com/jksn12/JKAPI/ent"
+	"github.com/jksn12/JKAPI/ent/group"
+	"github.com/jksn12/JKAPI/ent/predicate"
+	"github.com/jksn12/JKAPI/ent/schema/mixins"
+	"github.com/jksn12/JKAPI/ent/user"
+	"github.com/jksn12/JKAPI/ent/usersubscription"
+	"github.com/jksn12/JKAPI/internal/pkg/pagination"
+	"github.com/jksn12/JKAPI/internal/service"
 )
 
 type userSubscriptionRepository struct {

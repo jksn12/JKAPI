@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
+	"github.com/jksn12/JKAPI/internal/pkg/pagination"
 	"github.com/stretchr/testify/require"
 )
 
@@ -1782,7 +1782,7 @@ func TestBuildContentModerationAccountDisabledEmailBody_ContainsBanDetails(t *te
 	userID := int64(1001)
 	cfg := defaultContentModerationConfig()
 	cfg.BanThreshold = 10
-	body := buildContentModerationAccountDisabledEmailBody("Sub2API <Admin>", &ContentModerationLog{
+	body := buildContentModerationAccountDisabledEmailBody("JKAPI <Admin>", &ContentModerationLog{
 		UserID:          &userID,
 		UserEmail:       "user@example.com",
 		GroupName:       "vip_2",
@@ -1796,7 +1796,7 @@ func TestBuildContentModerationAccountDisabledEmailBody_ContainsBanDetails(t *te
 	require.Contains(t, body, "账户当前处于封禁状态，所有 API 请求将被拒绝")
 	require.Contains(t, body, "10 次（阈值 10）")
 	require.Contains(t, body, "sexual / 0.926")
-	require.Contains(t, body, "Sub2API &lt;Admin&gt;")
+	require.Contains(t, body, "JKAPI &lt;Admin&gt;")
 }
 
 func TestContentModerationUnbanUser_ActivatesUserAndInvalidatesAuthCache(t *testing.T) {

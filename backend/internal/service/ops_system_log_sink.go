@@ -11,8 +11,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	"github.com/Wei-Shaw/sub2api/internal/util/logredact"
+	"github.com/jksn12/JKAPI/internal/pkg/logger"
+	"github.com/jksn12/JKAPI/internal/util/logredact"
 )
 
 type OpsSystemLogSinkHealth struct {

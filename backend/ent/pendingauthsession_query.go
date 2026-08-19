@@ -13,10 +13,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/identityadoptiondecision"
-	"github.com/Wei-Shaw/sub2api/ent/pendingauthsession"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
-	"github.com/Wei-Shaw/sub2api/ent/user"
+	"github.com/jksn12/JKAPI/ent/identityadoptiondecision"
+	"github.com/jksn12/JKAPI/ent/pendingauthsession"
+	"github.com/jksn12/JKAPI/ent/predicate"
+	"github.com/jksn12/JKAPI/ent/user"
 )
 
 // PendingAuthSessionQuery is the builder for querying PendingAuthSession entities.

@@ -1,4 +1,4 @@
-module github.com/Wei-Shaw/sub2api
+module github.com/jksn12/JKAPI
 
 go 1.26.6
 

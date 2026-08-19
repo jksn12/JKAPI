@@ -2,7 +2,7 @@
 
 ### 当前系统
 
-sub2api 当前已经存在一套完整的内容审核能力：
+jkapi 当前已经存在一套完整的内容审核能力：
 
 - 核心实现位于 `backend/internal/service/content_moderation*.go`。
 - 管理 API 位于 `backend/internal/handler/admin/content_moderation_handler.go`，路由前缀为 `/admin/risk-control`。
@@ -250,7 +250,7 @@ config_version 每次成功保存单调加一。change_summary 只保存节点�
 PromptService 维护原子只读配置快照：
 
 - 启动时加载并校验。
-- 保存成功后先安装本实例快照，再 publish `sub2api:prompt_guard:config:invalidate`，消息只包含版本。
+- 保存成功后先安装本实例快照，再 publish `jkapi:prompt_guard:config:invalidate`，消息只包含版本。
 - 其他实例收到通知后重新从 settings 加载、解密、校验并原子替换。
 - Redis publish 失败时保留最后有效配置，并通过 5 秒有界 TTL 后台刷新。
 - 请求热路径只读取快照，不查询数据库。
@@ -383,7 +383,7 @@ CREATE TABLE prompt_audit_events (
 1. 检查有效模式、范围和节点；在 PostgreSQL 短事务内获取 Prompt Audit 队列准入 advisory transaction lock，重新统计 active jobs，并仅在低于 snapshot queue_capacity 时插入 staging job。
 2. 提取快照。
 3. 插入 `status=staging` 的 job。
-4. `SET sub2api:prompt_audit:payload:<job_id> <scan_text> EX 1800`。
+4. `SET jkapi:prompt_audit:payload:<job_id> <scan_text> EX 1800`。
 5. 条件更新 staging → queued。
 6. 输出 `prompt_audit.job_enqueued`。
 
@@ -520,7 +520,7 @@ Handler 使用自己已有的 OpenAI、Claude 或 Gemini error helper。正文�
 
 - OpenAI Chat/Responses：保持 `error.type/message` 或 Responses 现有结构，并设置 `error.code=<prompt_guard_*>`。
 - Claude Messages：保持 `type=error` 和合法的 `error.type=permission_error|api_error`，增加可选 `error.code=<prompt_guard_*>`。
-- Gemini：保持 Google envelope 的数值 `error.code`、message 和 canonical status；在 `error.details[]` 增加 `type.googleapis.com/google.rpc.ErrorInfo`，其 `reason=<prompt_guard_*>`、domain=`sub2api.securityaudit`，metadata 只允许 request_id。
+- Gemini：保持 Google envelope 的数值 `error.code`、message 和 canonical status；在 `error.details[]` 增加 `type.googleapis.com/google.rpc.ErrorInfo`，其 `reason=<prompt_guard_*>`、domain=`jkapi.securityaudit`，metadata 只允许 request_id。
 
 不得把 Gemini 数值 `error.code` 替换为字符串，也不得把类别、Prompt、节点或内部错误放入 details。协议 golden test 必须锁定三类 envelope。
 

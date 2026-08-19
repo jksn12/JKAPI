@@ -1,0 +1,22 @@
+[Unit]
+Description=JKAPI Data Management Daemon
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=jkapi
+Group=jkapi
+WorkingDirectory=/opt/jkapi
+ExecStart=/opt/jkapi/datamanagementd \
+  -socket-path /tmp/jkapi-datamanagement.sock \
+  -sqlite-path /var/lib/jkapi/datamanagement/datamanagementd.db \
+  -version 1.0.0
+Restart=always
+RestartSec=5s
+LimitNOFILE=100000
+NoNewPrivileges=true
+PrivateTmp=false
+
+[Install]
+WantedBy=multi-user.target

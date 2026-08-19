@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
+	"github.com/jksn12/JKAPI/internal/pkg/pagination"
 	"github.com/google/uuid"
 )
 

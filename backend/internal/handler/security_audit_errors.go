@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/googleapi"
-	"github.com/Wei-Shaw/sub2api/internal/securityaudit"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/jksn12/JKAPI/internal/pkg/googleapi"
+	"github.com/jksn12/JKAPI/internal/securityaudit"
+	"github.com/jksn12/JKAPI/internal/service"
 	coderws "github.com/coder/websocket"
 	"github.com/gin-gonic/gin"
 )
@@ -116,7 +116,7 @@ func googleSecurityAuditError(c *gin.Context, decision *securityaudit.Decision) 
 		"code": status, "message": securityAuditMessage(decision), "status": googleStatus,
 		"details": []gin.H{{
 			"@type":  "type.googleapis.com/google.rpc.ErrorInfo",
-			"reason": securityAuditErrorCode(decision), "domain": "sub2api.securityaudit",
+			"reason": securityAuditErrorCode(decision), "domain": "jkapi.securityaudit",
 			"metadata": gin.H{"request_id": requestID},
 		}},
 	}})

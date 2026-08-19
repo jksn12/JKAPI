@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/openai"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat"
+	"github.com/jksn12/JKAPI/internal/pkg/logger"
+	"github.com/jksn12/JKAPI/internal/pkg/openai"
+	"github.com/jksn12/JKAPI/internal/pkg/openai_compat"
 	"github.com/tidwall/gjson"
 )
 

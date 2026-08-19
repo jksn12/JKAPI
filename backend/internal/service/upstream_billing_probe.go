@@ -19,9 +19,9 @@ import (
 	"sync"
 	"time"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/logger"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
+	"github.com/jksn12/JKAPI/internal/pkg/logger"
+	"github.com/jksn12/JKAPI/internal/pkg/tlsfingerprint"
 	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
@@ -42,8 +42,8 @@ const (
 	upstreamBillingProbeMaxPerCycle            = 20
 	upstreamBillingProbeConcurrency            = 4
 	upstreamBillingProbeMaxDelay               = 24 * time.Hour
-	// unsupported 账号的重探间隔倍数：上游不是 sub2api 中转就不会突然长出
-	// /v1/sub2api/billing，按常规 interval 重排只会持续占满每周期
+	// unsupported 账号的重探间隔倍数：上游不是 jkapi 中转就不会突然长出
+	// /v1/jkapi/billing，按常规 interval 重排只会持续占满每周期
 	// upstreamBillingProbeMaxPerCycle 个名额。
 	upstreamBillingProbeUnsupportedDelayFactor = 8
 	upstreamBillingProbeAccountRateScale       = 10000.0
@@ -207,7 +207,7 @@ func normalizeUpstreamBillingProbeSettings(settings *UpstreamBillingProbeSetting
 	}
 }
 
-// UpstreamBillingProbeService discovers a remote Sub2API billing snapshot.
+// UpstreamBillingProbeService discovers a remote JKAPI billing snapshot.
 type UpstreamBillingProbeService struct {
 	accountRepo        AccountRepository
 	accountTestService *AccountTestService
@@ -605,7 +605,7 @@ func (s *UpstreamBillingProbeService) probeLoadedAccount(ctx context.Context, ac
 	} else if upstreamBillingProbeTargetIsOfficialAPI(baseURL) {
 		// 其他平台 base_url 为空或指向官方 API 根域（前端创建时会把空值
 		// 填成官方默认域，且提供 us-east-1.api.x.ai 等官方区域预设）⇒
-		// 必无 /v1/sub2api/billing；不发请求，直接记 unsupported，避免
+		// 必无 /v1/jkapi/billing；不发请求，直接记 unsupported，避免
 		// 拿账号 Key 周期性请求官方域的不存在路径。
 		return s.persistProbeFailure(ctx, account, intervalMinutes, now, 0, "unsupported", 0)
 	}
@@ -623,7 +623,7 @@ func (s *UpstreamBillingProbeService) probeLoadedAccount(ctx context.Context, ac
 		}
 		proxyURL = account.Proxy.URL()
 	}
-	probeURL := buildOpenAIEndpointURL(normalizedBaseURL, "/v1/sub2api/billing")
+	probeURL := buildOpenAIEndpointURL(normalizedBaseURL, "/v1/jkapi/billing")
 	probeCtx, cancel := context.WithTimeout(ctx, upstreamBillingProbeRequestTimeout)
 	defer cancel()
 	req, err := http.NewRequestWithContext(probeCtx, http.MethodGet, probeURL, bytes.NewReader(nil))
@@ -774,7 +774,7 @@ func parseUpstreamBillingProbeResponse(body []byte) (map[string]any, error) {
 	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, err
 	}
-	if response.Object != "sub2api.key_billing" || response.SchemaVersion != 1 || response.BillingScope != "token" {
+	if response.Object != "jkapi.key_billing" || response.SchemaVersion != 1 || response.BillingScope != "token" {
 		return nil, fmt.Errorf("unexpected billing response schema")
 	}
 	if response.GroupRateMultiplier == nil || response.ResolvedRateMultiplier == nil ||
@@ -964,11 +964,11 @@ func decodeUpstreamBillingProbeSnapshot(extra map[string]any) *UpstreamBillingPr
 }
 
 // IsUpstreamBillingProbeIdentity reports whether an account identity may opt
-// in to the upstream billing probe. `/v1/sub2api/billing` is a key-scoped
-// sub2api convention shared by the supported API-key platforms (including the
+// in to the upstream billing probe. `/v1/jkapi/billing` is a key-scoped
+// jkapi convention shared by the supported API-key platforms (including the
 // CN providers, whose official-domain accounts are short-circuited to
 // "unsupported" by upstreamBillingProbeTargetIsOfficialAPI).
-// Non-sub2api upstreams return 404 and the snapshot records "unsupported".
+// Non-jkapi upstreams return 404 and the snapshot records "unsupported".
 // Only AccountTypeAPIKey is in scope. OAuth/Bedrock hold no static API key to
 // present at all; AccountTypeUpstream (antigravity relay accounts) does carry
 // a base_url plus a static api_key, but it is deliberately left out of the
@@ -998,15 +998,15 @@ func isUpstreamBillingProbeAccount(account *Account) bool {
 // so probing them would send the account key to an official API path that
 // cannot exist. Matching is by registrable root domain — exact host or any
 // subdomain, after stripping the port and a trailing DNS dot — because no
-// third-party sub2api relay can live under these domains, while custom
-// relays (the only targets that can answer /v1/sub2api/billing) always do
+// third-party jkapi relay can live under these domains, while custom
+// relays (the only targets that can answer /v1/jkapi/billing) always do
 // probe. OpenAI-platform accounts never reach this check: they keep the
 // upstream-official behavior of probing api.openai.com.
 // ollama.com is a first-class configuration here (Ollama Cloud accounts are
 // platform openai/anthropic with base_url https://ollama.com/v1), and it is
 // an official provider API just like the rest, so it belongs on this list.
 // CN provider domains (moonshot.cn / kimi.com / bigmodel.cn / deepseek.com)
-// serve the same role: official APIs that can never host /v1/sub2api/billing,
+// serve the same role: official APIs that can never host /v1/jkapi/billing,
 // so their accounts short-circuit to "unsupported" without a request.
 var upstreamBillingProbeOfficialAPIDomains = []string{
 	"anthropic.com",
@@ -1096,8 +1096,8 @@ func nextProbeDelay(intervalMinutes int, retryAfterDuration time.Duration) time.
 }
 
 // unsupportedProbeDelay 拉长 unsupported 账号的重探间隔，让无效候选自然退出
-// 热队列，不再和真正接入 sub2api 的中转账号抢每周期的探测名额。
-// 仍按 upstreamBillingProbeMaxDelay 封顶，保证上游后来接入 sub2api 时最迟一天
+// 热队列，不再和真正接入 jkapi 的中转账号抢每周期的探测名额。
+// 仍按 upstreamBillingProbeMaxDelay 封顶，保证上游后来接入 jkapi 时最迟一天
 // 内会被重新发现；base 本身已达上限（例如 Retry-After 明确要求更久）时原样返回，
 // 不缩短上游指令。
 func unsupportedProbeDelay(intervalMinutes int, retryAfterDuration time.Duration) time.Duration {

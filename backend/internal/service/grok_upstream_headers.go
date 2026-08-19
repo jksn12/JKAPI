@@ -6,13 +6,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
+	"github.com/jksn12/JKAPI/internal/pkg/tlsfingerprint"
+	"github.com/jksn12/JKAPI/internal/pkg/xai"
 )
 
 // grokUpstreamUserAgent is kept for compatibility with older Grok request
 // tests. Current requests use the pinned default UA from this package.
-const grokUpstreamUserAgent = "sub2api-grok/1.0"
+const grokUpstreamUserAgent = "jkapi-grok/1.0"
 
 // Fixed CLI identity aliases — single source of truth is internal/pkg/xai.
 const (

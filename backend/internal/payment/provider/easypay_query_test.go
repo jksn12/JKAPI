@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/Wei-Shaw/sub2api/internal/payment"
+	"github.com/jksn12/JKAPI/internal/payment"
 )
 
 func TestEasyPayQueryOrderStatusMapping(t *testing.T) {

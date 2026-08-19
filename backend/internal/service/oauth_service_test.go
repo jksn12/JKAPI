@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/oauth"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
+	"github.com/jksn12/JKAPI/internal/pkg/oauth"
+	"github.com/jksn12/JKAPI/internal/pkg/pagination"
 )
 
 // --- mock: ClaudeOAuthClient ---

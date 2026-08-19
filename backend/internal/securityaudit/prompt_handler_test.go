@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	servermiddleware "github.com/Wei-Shaw/sub2api/internal/server/middleware"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
+	servermiddleware "github.com/jksn12/JKAPI/internal/server/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )

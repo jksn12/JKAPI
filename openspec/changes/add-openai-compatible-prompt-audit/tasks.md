@@ -43,7 +43,7 @@
 - [x] 4.5 确保公共配置只返回 has_token/token_status，任何 JSON marshal 路径都不会输出密文或明文
 - [x] 4.6 实现携带 expected_config_version 的 PostgreSQL advisory-lock CAS 保存、单调 config_version、409 conflict、updated_at、updated_by 和脱敏 change_summary
 - [x] 4.7 实现原子内存配置快照、最后有效版本、加载错误和有界 TTL 刷新
-- [x] 4.8 实现 Redis `sub2api:prompt_guard:config:invalidate` publish/subscribe 和 publish 失败降级日志
+- [x] 4.8 实现 Redis `jkapi:prompt_guard:config:invalidate` publish/subscribe 和 publish 失败降级日志
 - [x] 4.9 添加配置加密往返、旧字段缺失、非法组合、边界值、两管理员/两实例并发 CAS、多实例失效和 Redis 不可用测试
 - [x] 4.10 添加 canary secret 测试，断言 settings 公共读取、日志和错误均不出现节点 API Key
 

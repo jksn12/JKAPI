@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/ent"
-	"github.com/Wei-Shaw/sub2api/ent/securitysecret"
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/jksn12/JKAPI/ent"
+	"github.com/jksn12/JKAPI/ent/securitysecret"
+	"github.com/jksn12/JKAPI/internal/config"
 )
 
 const (

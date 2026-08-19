@@ -1,27 +1,27 @@
 [Unit]
-Description=Sub2API - AI API Gateway Platform
-Documentation=https://github.com/Wei-Shaw/sub2api
+Description=JKAPI - AI API Gateway Platform
+Documentation=https://github.com/jksn12/JKAPI
 After=network.target postgresql.service redis.service
 Wants=postgresql.service redis.service
 
 [Service]
 Type=simple
-User=sub2api
-Group=sub2api
-WorkingDirectory=/opt/sub2api
-ExecStart=/opt/sub2api/sub2api
+User=jkapi
+Group=jkapi
+WorkingDirectory=/opt/jkapi
+ExecStart=/opt/jkapi/jkapi
 Restart=always
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=sub2api
+SyslogIdentifier=jkapi
 
 # Security hardening
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
 PrivateTmp=true
-ReadWritePaths=/opt/sub2api
+ReadWritePaths=/opt/jkapi
 
 # Environment - Server configuration
 # Modify these values to change listen address and port

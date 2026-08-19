@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
+	"github.com/jksn12/JKAPI/internal/config"
 	coderws "github.com/coder/websocket"
 	"github.com/stretchr/testify/require"
 )

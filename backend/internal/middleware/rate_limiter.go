@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	ippkg "github.com/Wei-Shaw/sub2api/internal/pkg/ip"
+	ippkg "github.com/jksn12/JKAPI/internal/pkg/ip"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"

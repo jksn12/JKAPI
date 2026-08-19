@@ -9,9 +9,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/antigravity"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/claude"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/geminicli"
+	"github.com/jksn12/JKAPI/internal/pkg/antigravity"
+	"github.com/jksn12/JKAPI/internal/pkg/claude"
+	"github.com/jksn12/JKAPI/internal/pkg/geminicli"
 )
 
 const upstreamModelsBodyLimit int64 = 8 << 20

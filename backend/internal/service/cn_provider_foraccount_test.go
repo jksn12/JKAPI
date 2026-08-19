@@ -9,7 +9,7 @@ import (
 	"context"
 	"testing"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
 	"github.com/stretchr/testify/require"
 )
 

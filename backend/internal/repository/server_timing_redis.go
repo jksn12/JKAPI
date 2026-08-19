@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/servertiming"
+	"github.com/jksn12/JKAPI/internal/pkg/servertiming"
 	"github.com/redis/go-redis/v9"
 )
 

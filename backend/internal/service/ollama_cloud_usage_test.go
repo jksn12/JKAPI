@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/pkg/tlsfingerprint"
+	"github.com/jksn12/JKAPI/internal/pkg/tlsfingerprint"
 	"github.com/stretchr/testify/require"
 )
 

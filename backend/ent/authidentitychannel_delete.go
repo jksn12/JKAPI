@@ -8,8 +8,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/Wei-Shaw/sub2api/ent/authidentitychannel"
-	"github.com/Wei-Shaw/sub2api/ent/predicate"
+	"github.com/jksn12/JKAPI/ent/authidentitychannel"
+	"github.com/jksn12/JKAPI/ent/predicate"
 )
 
 // AuthIdentityChannelDelete is the builder for deleting a AuthIdentityChannel entity.

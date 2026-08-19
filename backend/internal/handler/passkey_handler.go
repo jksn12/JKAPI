@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"strings"
 
-	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/ip"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
-	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
-	"github.com/Wei-Shaw/sub2api/internal/service"
+	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
+	"github.com/jksn12/JKAPI/internal/pkg/ip"
+	"github.com/jksn12/JKAPI/internal/pkg/response"
+	middleware2 "github.com/jksn12/JKAPI/internal/server/middleware"
+	"github.com/jksn12/JKAPI/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
@@ -96,7 +96,7 @@ func (h *PasskeyHandler) BeginLogin(c *gin.Context) {
 	response.Success(c, passkeyOptionsResponse{SessionToken: token, Options: assertion})
 }
 
-// FinishLogin validates a passkey assertion and creates a normal Sub2API token
+// FinishLogin validates a passkey assertion and creates a normal JKAPI token
 // session. User verification is mandatory, so a successful passkey assertion
 // already supplies phishing-resistant multi-factor authentication and does not
 // enter the separate TOTP challenge flow.

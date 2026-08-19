@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Wei-Shaw/sub2api/internal/config"
-	"github.com/Wei-Shaw/sub2api/internal/domain"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/openai_compat"
-	"github.com/Wei-Shaw/sub2api/internal/pkg/xai"
+	"github.com/jksn12/JKAPI/internal/config"
+	"github.com/jksn12/JKAPI/internal/domain"
+	"github.com/jksn12/JKAPI/internal/pkg/openai_compat"
+	"github.com/jksn12/JKAPI/internal/pkg/xai"
 )
 
 type Account struct {
