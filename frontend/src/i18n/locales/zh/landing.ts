@@ -14,13 +14,48 @@ export default {
     login: '登录',
     getStarted: '立即开始',
     goToDashboard: '进入控制台',
+    launchBadge: '商业化 AI 中转网关',
     // 新增：面向用户的价值主张
     heroSubtitle: '一个密钥，畅用多个 AI 模型',
-    heroDescription: '无需管理多个订阅账号，一站式接入 Claude、GPT、Gemini 等主流 AI 服务',
+    heroDescription: '面向商业化中转运营，提供统一入口、可控路由和清晰的用量视图。',
     tags: {
       subscriptionToApi: '订阅转 API',
       stickySession: '会话保持',
       realtimeBilling: '按量计费'
+    },
+    highlights: {
+      unifiedAccess: {
+        title: '统一接入',
+        desc: '一个对外入口，统一承接多个上游模型与供应商。'
+      },
+      routing: {
+        title: '智能路由',
+        desc: '自动均衡负载、保持会话，并在异常时切换备用账号。'
+      },
+      billing: {
+        title: '用量可控',
+        desc: '流量、配额和计费行为集中查看，方便运营。'
+      }
+    },
+    gatewayPanel: {
+      title: '网关概览',
+      route: 'api.yang-shuo.top',
+      healthy: '在线',
+      metricEndpoint: '入口',
+      metricEndpointValue: '单一 API',
+      metricPool: '路由池',
+      metricPoolValue: '多账号',
+      metricLatency: '状态',
+      metricLatencyValue: '可用',
+      sampleLabel: '示例请求',
+      sampleRequest: 'curl -X POST /v1/messages',
+      sampleRoute: '自动路由到上游',
+      sampleResponse: '200 OK',
+      samplePayload: '{ "content": "Hello from JKAPI" }',
+      controlQuota: '配额控制',
+      controlQuotaDesc: '在问题发生前就能设置限制并看清用量。',
+      controlRouting: '路由控制',
+      controlRoutingDesc: '无需改客户端接入，即可切换上游账号。'
     },
     // 用户痛点区块
     painPoints: {

@@ -14,13 +14,48 @@ export default {
     login: 'Login',
     getStarted: 'Get Started',
     goToDashboard: 'Go to Dashboard',
+    launchBadge: 'Commercial AI Gateway',
     // User-focused value proposition
     heroSubtitle: 'One Key, All AI Models',
-    heroDescription: 'No need to manage multiple subscriptions. Access Claude, GPT, Gemini and more with a single API key',
+    heroDescription: 'Built for commercial relay operations with unified access, controllable routing, and usage visibility from day one.',
     tags: {
       subscriptionToApi: 'Subscription to API',
       stickySession: 'Session Persistence',
       realtimeBilling: 'Pay As You Go'
+    },
+    highlights: {
+      unifiedAccess: {
+        title: 'Unified Access',
+        desc: 'One public entry point for multiple upstream models and providers.'
+      },
+      routing: {
+        title: 'Smart Routing',
+        desc: 'Balance load, keep sessions sticky, and fall back automatically.'
+      },
+      billing: {
+        title: 'Usage Control',
+        desc: 'Track traffic, quotas, and billing behavior in one place.'
+      }
+    },
+    gatewayPanel: {
+      title: 'Gateway Overview',
+      route: 'api.yang-shuo.top',
+      healthy: 'Live',
+      metricEndpoint: 'Entry Point',
+      metricEndpointValue: 'Single API',
+      metricPool: 'Routing Pool',
+      metricPoolValue: 'Multi-account',
+      metricLatency: 'Status',
+      metricLatencyValue: 'Ready',
+      sampleLabel: 'Example Request',
+      sampleRequest: 'curl -X POST /v1/messages',
+      sampleRoute: 'Routes to upstream automatically',
+      sampleResponse: '200 OK',
+      samplePayload: '{ "content": "Hello from JKAPI" }',
+      controlQuota: 'Quota Control',
+      controlQuotaDesc: 'Set limits and see usage clearly before it becomes a problem.',
+      controlRouting: 'Routing Control',
+      controlRoutingDesc: 'Switch upstream accounts without changing client integration.'
     },
     // Pain points section
     painPoints: {
