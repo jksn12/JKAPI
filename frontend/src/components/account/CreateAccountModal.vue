@@ -202,6 +202,19 @@
             <PlatformIcon platform="deepseek" size="sm" />
             DeepSeek
           </button>
+          <button
+            type="button"
+            @click="selectCNPlatform('xiaomi')"
+            :class="[
+              'flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-all',
+              form.platform === 'xiaomi'
+                ? 'bg-white text-red-600 shadow-sm dark:bg-dark-600 dark:text-red-400'
+                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200'
+            ]"
+          >
+            <PlatformIcon platform="xiaomi" size="sm" />
+            MiMo
+          </button>
         </div>
       </div>
 
@@ -485,7 +498,7 @@
           </button>
           <!-- Coding Plan (kimi / zhipu only — DeepSeek has no coding plan) -->
           <button
-            v-if="form.platform !== 'deepseek'"
+            v-if="form.platform !== 'deepseek' && form.platform !== 'xiaomi'"
             type="button"
             @click="accountMode = 'coding'"
             :class="[
@@ -3928,12 +3941,12 @@ const accountMode = ref<CnAccountMode>('payg')
 // responses=deepseek 原生 Responses 端点（Codex）。与账号类型正交。
 const apiProtocol = ref<CnApiProtocol>('chat_completions')
 const isCNPlatform = computed(
-  () => form.platform === 'kimi' || form.platform === 'zhipu' || form.platform === 'deepseek'
+  () => form.platform === 'kimi' || form.platform === 'zhipu' || form.platform === 'deepseek' || form.platform === 'xiaomi'
 )
 // CnBaseUrlPresets 的 platform prop 是平台字面量联合类型，模板里不能写
 // `as` 断言（其中的 `|` 会被 eslint 误判为 Vue2 filter 语法），经此 computed 传递。
-const cnPresetPlatform = computed<'kimi' | 'zhipu' | 'deepseek'>(() => {
-  if (form.platform === 'kimi' || form.platform === 'zhipu' || form.platform === 'deepseek') {
+const cnPresetPlatform = computed<'kimi' | 'zhipu' | 'deepseek' | 'xiaomi'>(() => {
+  if (form.platform === 'kimi' || form.platform === 'zhipu' || form.platform === 'deepseek' || form.platform === 'xiaomi') {
     return form.platform
   }
   return 'kimi'
@@ -3947,6 +3960,9 @@ const cnProtocolOptions = computed<Array<{ value: CnApiProtocol; labelKey: strin
   if (form.platform === 'deepseek') {
     opts.push({ value: 'responses', labelKey: 'responses' })
   }
+  if (form.platform === 'xiaomi') {
+    return [{ value: 'chat_completions', labelKey: 'chatCompletions' }]
+  }
   return opts
 })
 // 当前选中平台的品牌色（选中卡片描边 / 图标底色），与 platformColors 取色一致。
@@ -3958,6 +3974,8 @@ const cnAccentActiveClass = computed(() => {
       return 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
     case 'deepseek':
       return 'border-teal-500 bg-teal-50 dark:bg-teal-900/20'
+    case 'xiaomi':
+      return 'border-red-500 bg-red-50 dark:bg-red-900/20'
     default:
       return 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
   }
@@ -3970,18 +3988,23 @@ const cnAccentIconClass = computed(() => {
       return 'bg-indigo-500 text-white'
     case 'deepseek':
       return 'bg-teal-500 text-white'
+    case 'xiaomi':
+      return 'bg-red-500 text-white'
     default:
       return 'bg-primary-500 text-white'
   }
 })
 // 切换国产供应商平台：强制 apikey 类型，deepseek 无 coding 套餐故锁定 payg，
 // 协议回落 chat_completions，并把 base url 重置为该平台默认端点。
-function selectCNPlatform(platform: 'kimi' | 'zhipu' | 'deepseek') {
+function selectCNPlatform(platform: 'kimi' | 'zhipu' | 'deepseek' | 'xiaomi') {
   form.platform = platform
   form.type = 'apikey'
   accountCategory.value = 'apikey'
   apiProtocol.value = 'chat_completions'
   if (platform === 'deepseek') {
+    accountMode.value = 'payg'
+  }
+  if (platform === 'xiaomi') {
     accountMode.value = 'payg'
   }
   apiKeyBaseUrl.value = defaultCNBaseUrl(platform, accountMode.value, apiProtocol.value)
@@ -5416,7 +5439,7 @@ const handleSubmit = async () => {
   // 国产供应商：账号模式 + 协议 + 对应端点写入凭据；后端按 account_mode 路由
   // 额度/余额探测，按 api_protocol 路由转发端点与格式。注意 CN apikey 走本函数
   // 的通用路径（直接 doCreateAccount），不经过 createAccountAndFinish。
-  if (form.platform === 'kimi' || form.platform === 'zhipu' || form.platform === 'deepseek') {
+  if (form.platform === 'kimi' || form.platform === 'zhipu' || form.platform === 'deepseek' || form.platform === 'xiaomi') {
     credentials.account_mode = accountMode.value
     credentials.api_protocol = apiProtocol.value
     const resolvedCNBase = (

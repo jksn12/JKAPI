@@ -19,6 +19,27 @@
         </div>
       </div>
 
+      <div class="card flex flex-col gap-4 border border-emerald-200 bg-emerald-50/60 p-5 dark:border-emerald-900/60 dark:bg-emerald-950/20 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex min-w-0 items-start gap-3">
+          <div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+            <Icon name="creditCard" size="md" />
+          </div>
+          <div class="min-w-0">
+            <p class="font-semibold text-gray-900 dark:text-white">{{ t('payment.yunmaoRechargeTitle') }}</p>
+            <p class="mt-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">{{ t('payment.yunmaoRechargeHint') }}</p>
+          </div>
+        </div>
+        <a
+          href="https://catfk.com/shop/jkapi"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn btn-primary inline-flex shrink-0 items-center justify-center gap-2 sm:w-auto"
+        >
+          {{ t('payment.yunmaoRechargeAction') }}
+          <Icon name="externalLink" size="sm" />
+        </a>
+      </div>
+
       <!-- Redeem Form -->
       <div class="card">
         <div class="p-6">

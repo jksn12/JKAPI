@@ -75,6 +75,7 @@ type stubAdminService struct {
 		codeType  string
 		status    string
 		search    string
+		category  string
 		sortBy    string
 		sortOrder string
 		calls     int
@@ -682,10 +683,11 @@ func (s *stubAdminService) CheckProxyQuality(ctx context.Context, id int64) (*se
 	}, nil
 }
 
-func (s *stubAdminService) ListRedeemCodes(ctx context.Context, page, pageSize int, codeType, status, search string, sortBy, sortOrder string) ([]service.RedeemCode, int64, error) {
+func (s *stubAdminService) ListRedeemCodes(ctx context.Context, page, pageSize int, codeType, status, search, category string, sortBy, sortOrder string) ([]service.RedeemCode, int64, error) {
 	s.lastListRedeemCodes.codeType = codeType
 	s.lastListRedeemCodes.status = status
 	s.lastListRedeemCodes.search = search
+	s.lastListRedeemCodes.category = category
 	s.lastListRedeemCodes.sortBy = sortBy
 	s.lastListRedeemCodes.sortOrder = sortOrder
 	s.lastListRedeemCodes.calls++

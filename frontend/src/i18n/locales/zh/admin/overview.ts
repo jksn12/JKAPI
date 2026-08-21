@@ -884,6 +884,7 @@ export default {
         kimi: 'Kimi',
         zhipu: 'Zhipu GLM',
         deepseek: 'DeepSeek',
+        xiaomi: 'MiMo（小米）',
         composite: 'Composite',
       },
       saving: '保存中...',

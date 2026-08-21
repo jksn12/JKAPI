@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv, Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import * as vueCompiler from 'vue/compiler-sfc'
 import checker from 'vite-plugin-checker'
 import { resolve } from 'path'
 
@@ -85,7 +86,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [
-      vue(),
+      vue({ compiler: vueCompiler }),
       checker({
         vueTsc: true
       }),

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	dbent "github.com/jksn12/JKAPI/ent"
 	"github.com/jksn12/JKAPI/ent/authidentity"
 	"github.com/jksn12/JKAPI/ent/enttest"
@@ -22,7 +23,6 @@ import (
 	"github.com/jksn12/JKAPI/internal/config"
 	"github.com/jksn12/JKAPI/internal/pkg/pagination"
 	"github.com/jksn12/JKAPI/internal/service"
-	"github.com/gin-gonic/gin"
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/require"
 
@@ -3002,7 +3002,7 @@ func (r *oauthPendingFlowRedeemCodeRepo) List(context.Context, pagination.Pagina
 	panic("unexpected List call")
 }
 
-func (r *oauthPendingFlowRedeemCodeRepo) ListWithFilters(context.Context, pagination.PaginationParams, string, string, string) ([]service.RedeemCode, *pagination.PaginationResult, error) {
+func (r *oauthPendingFlowRedeemCodeRepo) ListWithFilters(context.Context, pagination.PaginationParams, string, string, string, string) ([]service.RedeemCode, *pagination.PaginationResult, error) {
 	panic("unexpected ListWithFilters call")
 }
 

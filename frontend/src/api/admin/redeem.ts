@@ -24,6 +24,7 @@ export async function list(
   pageSize: number = 20,
   filters?: {
     type?: RedeemCodeType
+    category?: string
     status?: 'active' | 'used' | 'expired' | 'unused' | 'disabled'
     search?: string
     sort_by?: string
@@ -70,11 +71,13 @@ export async function generate(
   value: number,
   groupId?: number | null,
   validityDays?: number,
-  expiresInDays?: number | null
+  expiresInDays?: number | null,
+  category?: string
 ): Promise<RedeemCode[]> {
   const payload: GenerateRedeemCodesRequest = {
     count,
     type,
+    category: category?.trim() || undefined,
     value
   }
 
@@ -179,6 +182,7 @@ export async function getStats(): Promise<{
  */
 export async function exportCodes(filters?: {
   type?: RedeemCodeType
+  category?: string
   status?: 'used' | 'expired' | 'unused' | 'disabled'
   search?: string
   sort_by?: string

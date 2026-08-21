@@ -20,6 +20,12 @@
             @change="loadCodes"
           />
           <Select
+            v-model="filters.category"
+            :options="categoryFilterOptions"
+            class="w-40"
+            @change="loadCodes"
+          />
+          <Select
             v-model="filters.status"
             :options="filterStatusOptions"
             class="w-36"
@@ -125,6 +131,20 @@
               ]"
             >
               {{ t('admin.redeem.types.' + value) }}
+            </span>
+          </template>
+
+          <template #cell-category="{ value }">
+            <span
+              :class="[
+                'inline-flex max-w-36 items-center truncate rounded-full px-2 py-0.5 text-xs font-medium',
+                value
+                  ? 'bg-sky-50 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300'
+                  : 'bg-gray-100 text-gray-500 dark:bg-dark-700 dark:text-dark-400'
+              ]"
+              :title="value || t('admin.redeem.uncategorized')"
+            >
+              {{ value || t('admin.redeem.uncategorized') }}
             </span>
           </template>
 
@@ -286,6 +306,20 @@
             <div>
               <label class="input-label">{{ t('admin.redeem.codeType') }}</label>
               <Select v-model="generateForm.type" :options="typeOptions" />
+            </div>
+            <div>
+              <label class="input-label">{{ t('admin.redeem.category') }}</label>
+              <input
+                v-model="generateForm.category"
+                type="text"
+                maxlength="64"
+                class="input"
+                :list="categoryDatalistId"
+                :placeholder="t('admin.redeem.categoryPlaceholder')"
+              />
+              <datalist :id="categoryDatalistId">
+                <option v-for="option in categoryPresetOptions" :key="option.value" :value="option.value" />
+              </datalist>
             </div>
             <!-- 余额/并发类型：显示数值输入 -->
             <div v-if="generateForm.type !== 'subscription' && generateForm.type !== 'invitation'">
@@ -483,6 +517,32 @@
                 class="input"
                 :placeholder="t('admin.redeem.batchNotesPlaceholder')"
               ></textarea>
+            </div>
+
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <input
+                  v-model="batchUpdateForm.update_category"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                {{ t('admin.redeem.batchFields.category') }}
+              </label>
+              <template v-if="batchUpdateForm.update_category">
+                <Select v-model="batchUpdateForm.category_mode" :options="batchCategoryModeOptions" />
+                <input
+                  v-if="batchUpdateForm.category_mode === 'custom'"
+                  v-model="batchUpdateForm.category"
+                  type="text"
+                  maxlength="64"
+                  class="input"
+                  :list="batchCategoryDatalistId"
+                  :placeholder="t('admin.redeem.categoryPlaceholder')"
+                />
+                <datalist :id="batchCategoryDatalistId">
+                  <option v-for="option in categoryPresetOptions" :key="option.value" :value="option.value" />
+                </datalist>
+              </template>
             </div>
 
             <div class="space-y-2">
@@ -690,6 +750,63 @@ const textareaHeight = computed(() => {
 })
 
 const copiedAll = ref(false)
+const categoryDatalistId = 'redeem-category-presets'
+const batchCategoryDatalistId = 'redeem-batch-category-presets'
+const yunmaoRechargeAmounts = [1, 5, 10, 20, 50, 100, 200]
+
+const formatRechargeAmountLabel = (amount: number) => {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return ''
+  }
+  return Number.isInteger(amount) ? String(amount) : amount.toFixed(2).replace(/\.0+$/, '').replace(/0$/, '')
+}
+
+const buildYunmaoRechargeCategory = (amount: number) => {
+  const amountLabel = formatRechargeAmountLabel(amount)
+  return amountLabel ? `云猫充值 ${amountLabel}元` : '云猫充值'
+}
+
+const isAutoManagedCategory = (category: string) => {
+  const normalized = category.trim()
+  return normalized === '' || normalized === '云猫充值' || /^云猫充值 \d+(?:\.\d+)?元$/.test(normalized) || normalized === '订阅卡密'
+}
+
+const defaultCategoryOptions = computed(() => [
+  { value: '云猫充值', label: t('admin.redeem.categories.yunmaoRecharge') },
+  ...yunmaoRechargeAmounts.map((amount) => ({
+    value: buildYunmaoRechargeCategory(amount),
+    label: t('admin.redeem.categories.yunmaoRechargeAmount', {
+      amount: formatRechargeAmountLabel(amount)
+    })
+  })),
+  { value: '手工补偿', label: t('admin.redeem.categories.manualCompensation') },
+  { value: '活动发放', label: t('admin.redeem.categories.campaign') },
+  { value: '订阅卡密', label: t('admin.redeem.categories.subscriptionCode') }
+])
+
+const categoryPresetOptions = computed(() => {
+  const seen = new Set<string>()
+  const options: { value: string; label: string }[] = []
+  for (const option of defaultCategoryOptions.value) {
+    if (!seen.has(option.value)) {
+      seen.add(option.value)
+      options.push(option)
+    }
+  }
+  for (const code of codes.value) {
+    const category = code.category?.trim()
+    if (category && !seen.has(category)) {
+      seen.add(category)
+      options.push({ value: category, label: category })
+    }
+  }
+  return options
+})
+
+const categoryFilterOptions = computed(() => [
+  { value: '', label: t('admin.redeem.allCategories') },
+  ...categoryPresetOptions.value
+])
 
 const closeResultDialog = () => {
   showResultDialog.value = false
@@ -723,6 +840,7 @@ const columns = computed<Column[]>(() => [
   { key: 'select', label: '' },
   { key: 'code', label: t('admin.redeem.columns.code') },
   { key: 'type', label: t('admin.redeem.columns.type'), sortable: true },
+  { key: 'category', label: t('admin.redeem.columns.category'), sortable: true },
   { key: 'value', label: t('admin.redeem.columns.value'), sortable: true },
   { key: 'status', label: t('admin.redeem.columns.status'), sortable: true },
   { key: 'used_by', label: t('admin.redeem.columns.usedBy') },
@@ -764,6 +882,11 @@ const batchExpiryModeOptions = computed(() => [
   { value: 'custom', label: t('admin.redeem.customExpiry') }
 ])
 
+const batchCategoryModeOptions = computed(() => [
+  { value: 'custom', label: t('admin.redeem.setCategory') },
+  { value: 'clear', label: t('admin.redeem.clearCategory') }
+])
+
 const codes = ref<RedeemCode[]>([])
 const loading = ref(false)
 const generating = ref(false)
@@ -771,6 +894,7 @@ const batchUpdating = ref(false)
 const searchQuery = ref('')
 const filters = reactive({
   type: '',
+  category: '',
   status: ''
 })
 const pagination = reactive({
@@ -813,6 +937,9 @@ const batchUpdateForm = reactive({
   expires_at_local: '',
   update_notes: false,
   notes: '',
+  update_category: false,
+  category_mode: 'custom' as 'custom' | 'clear',
+  category: '',
   update_group_id: false,
   group_id: null as number | null
 })
@@ -831,11 +958,31 @@ const generateForm = reactive({
   type: 'balance' as RedeemCodeType,
   value: 10,
   count: 1,
+  category: buildYunmaoRechargeCategory(10),
   group_id: null as number | null,
   validity_days: 30,
   expiry_option: 'never' as RedeemCodeExpiryOption,
   custom_expiry_days: 7
 })
+const autoManageGenerateCategory = ref(true)
+
+const syncGenerateCategory = () => {
+  if (!autoManageGenerateCategory.value) {
+    return
+  }
+  if (generateForm.type === 'balance') {
+    generateForm.category = buildYunmaoRechargeCategory(generateForm.value)
+  } else if (generateForm.type === 'subscription') {
+    generateForm.category = '订阅卡密'
+  }
+}
+
+watch(
+  () => generateForm.category,
+  (category) => {
+    autoManageGenerateCategory.value = isAutoManagedCategory(category)
+  }
+)
 
 // 监听类型变化，邀请码类型时自动设置 value 为 0
 watch(
@@ -846,11 +993,22 @@ watch(
     } else if (generateForm.value === 0) {
       generateForm.value = 10
     }
+    syncGenerateCategory()
+  }
+)
+
+watch(
+  () => generateForm.value,
+  () => {
+    if (generateForm.type === 'balance') {
+      syncGenerateCategory()
+    }
   }
 )
 
 const buildRedeemQueryFilters = () => ({
   type: (filters.type || undefined) as RedeemCodeType | undefined,
+  category: filters.category || undefined,
   status: (filters.status || undefined) as 'used' | 'expired' | 'unused' | 'disabled' | undefined,
   search: searchQuery.value || undefined,
   sort_by: sortState.sort_by,
@@ -971,6 +1129,9 @@ const resetBatchUpdateForm = () => {
   )
   batchUpdateForm.update_notes = false
   batchUpdateForm.notes = ''
+  batchUpdateForm.update_category = false
+  batchUpdateForm.category_mode = 'custom'
+  batchUpdateForm.category = filters.category || buildYunmaoRechargeCategory(generateForm.value)
   batchUpdateForm.update_group_id = false
   batchUpdateForm.group_id = null
 }
@@ -1009,6 +1170,9 @@ const buildBatchUpdateFields = (): BatchUpdateRedeemCodeFields | null => {
   if (batchUpdateForm.update_notes) {
     fields.notes = batchUpdateForm.notes
   }
+  if (batchUpdateForm.update_category) {
+    fields.category = batchUpdateForm.category_mode === 'clear' ? '' : batchUpdateForm.category.trim()
+  }
   if (batchUpdateForm.update_group_id) {
     fields.group_id =
       batchUpdateForm.group_id == null ? null : Number(batchUpdateForm.group_id)
@@ -1038,7 +1202,8 @@ const handleGenerateCodes = async () => {
       generateForm.value,
       generateForm.type === 'subscription' ? generateForm.group_id : undefined,
       generateForm.type === 'subscription' ? generateForm.validity_days : undefined,
-      expiresInDays
+      expiresInDays,
+      generateForm.category
     )
     showGenerateDialog.value = false
     generatedCodes.value = result
@@ -1046,6 +1211,8 @@ const handleGenerateCodes = async () => {
     // 重置表单
     generateForm.group_id = null
     generateForm.validity_days = 30
+    autoManageGenerateCategory.value = true
+    generateForm.category = buildYunmaoRechargeCategory(generateForm.value)
     generateForm.expiry_option = 'never'
     generateForm.custom_expiry_days = 7
     loadCodes()

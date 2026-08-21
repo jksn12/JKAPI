@@ -152,6 +152,8 @@
                             ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
                             : value === 'deepseek'
                               ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
+                              : value === 'xiaomi'
+                                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                               : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
               ]"
             >
@@ -3977,6 +3979,8 @@
                                 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
                                 : group.platform === 'deepseek'
                                   ? 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
+                                  : group.platform === 'xiaomi'
+                                    ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
                                   : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
                   ]"
                 >
@@ -4749,6 +4753,7 @@ const platformOptions = computed(() => [
   { value: "kimi", label: "Kimi" },
   { value: "zhipu", label: "Zhipu GLM" },
   { value: "deepseek", label: "DeepSeek" },
+  { value: "xiaomi", label: "MiMo（小米）" },
   { value: "composite", label: "Composite" },
 ]);
 
@@ -4762,6 +4767,7 @@ const platformFilterOptions = computed(() => [
   { value: "kimi", label: "Kimi" },
   { value: "zhipu", label: "Zhipu GLM" },
   { value: "deepseek", label: "DeepSeek" },
+  { value: "xiaomi", label: "MiMo（小米）" },
   { value: "composite", label: "Composite" },
 ]);
 
@@ -4774,6 +4780,7 @@ const compositeRoutePlatformOptions = computed(() => [
   { value: "kimi", label: "Kimi" },
   { value: "zhipu", label: "Zhipu GLM" },
   { value: "deepseek", label: "DeepSeek" },
+  { value: "xiaomi", label: "MiMo（小米）" },
 ]);
 
 const compositeRouteEndpointOptions = computed(() => [

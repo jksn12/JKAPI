@@ -251,11 +251,25 @@ export default {
       subscription: 'Subscription',
       invitation: 'Invitation',
       invitationHint: 'Invitation codes are used to restrict user registration. They are automatically marked as used after use.',
+      category: 'Category',
+      categoryPlaceholder: 'e.g. Yunmao recharge, campaign',
+      uncategorized: 'Uncategorized',
+      allCategories: 'All Categories',
+      setCategory: 'Set category',
+      clearCategory: 'Clear category',
+      categories: {
+        yunmaoRecharge: 'Yunmao Recharge',
+        yunmaoRechargeAmount: 'Yunmao Recharge {amount} Yuan',
+        manualCompensation: 'Manual Compensation',
+        campaign: 'Campaign',
+        subscriptionCode: 'Subscription Codes'
+      },
       unused: 'Unused',
       used: 'Used',
       columns: {
         code: 'Code',
         type: 'Type',
+        category: 'Category',
         value: 'Value',
         status: 'Status',
         usedBy: 'Used By',
@@ -278,6 +292,7 @@ export default {
         status: 'Status',
         expiresAt: 'Expires At',
         notes: 'Notes',
+        category: 'Category',
         group: 'Group'
       },
       batchNotesPlaceholder: 'Enter the new note, or leave blank to clear it',

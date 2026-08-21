@@ -951,6 +951,7 @@ export default {
         kimi: 'Kimi',
         zhipu: 'Zhipu GLM',
         deepseek: 'DeepSeek',
+        xiaomi: 'MiMo (Xiaomi)',
         composite: 'Composite',
       },
       deleteConfirm:

@@ -3,13 +3,18 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"strings"
 	"time"
+	"unicode/utf8"
 )
+
+const MaxRedeemCodeCategoryLength = 64
 
 type RedeemCode struct {
 	ID        int64
 	Code      string
 	Type      string
+	Category  string
 	Value     float64
 	Status    string
 	UsedBy    *int64
@@ -53,4 +58,13 @@ func GenerateRedeemCode() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+func NormalizeRedeemCodeCategory(category string) string {
+	category = strings.TrimSpace(category)
+	if utf8.RuneCountInString(category) <= MaxRedeemCodeCategoryLength {
+		return category
+	}
+	runes := []rune(category)
+	return string(runes[:MaxRedeemCodeCategoryLength])
 }

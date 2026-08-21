@@ -42,6 +42,9 @@ func (RedeemCode) Fields() []ent.Field {
 		field.String("type").
 			MaxLen(20).
 			Default(domain.RedeemTypeBalance),
+		field.String("category").
+			MaxLen(64).
+			Default(""),
 		field.Float("value").
 			SchemaType(map[string]string{dialect.Postgres: "decimal(20,8)"}).
 			Default(0),
@@ -92,6 +95,7 @@ func (RedeemCode) Indexes() []ent.Index {
 	return []ent.Index{
 		// code 字段已在 Fields() 中声明 Unique()，无需重复索引
 		index.Fields("status"),
+		index.Fields("category"),
 		index.Fields("used_by"),
 		index.Fields("group_id"),
 		index.Fields("expires_at"),

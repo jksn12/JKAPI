@@ -294,7 +294,7 @@ func (a *Account) IsCNProvider() bool {
 // 兼容上游，也经 OpenAI 网关转发。
 func (a *Account) IsOpenAICompatible() bool {
 	return a != nil && (a.Platform == PlatformOpenAI || a.Platform == PlatformGrok ||
-		a.Platform == PlatformKimi || a.Platform == PlatformZhipu || a.Platform == PlatformDeepseek)
+		a.Platform == PlatformKimi || a.Platform == PlatformZhipu || a.Platform == PlatformDeepseek || a.Platform == PlatformXiaomi)
 }
 
 func (a *Account) GeminiOAuthType() string {
@@ -1329,6 +1329,8 @@ func (a *Account) GetOpenAIBaseURL() string {
 		return DefaultZhipuPayGBaseURL
 	case PlatformDeepseek:
 		return DefaultDeepseekBaseURL
+	case PlatformXiaomi:
+		return DefaultXiaomiBaseURL
 	default:
 		return "https://api.openai.com"
 	}
@@ -1362,6 +1364,9 @@ func (a *Account) GetAPIProtocol() string {
 	}
 	switch strings.TrimSpace(a.GetCredential("api_protocol")) {
 	case APIProtocolAnthropic:
+		if a.Platform == PlatformXiaomi {
+			return APIProtocolChatCompletions
+		}
 		return APIProtocolAnthropic
 	case APIProtocolResponses:
 		if a.Platform == PlatformDeepseek {
@@ -1428,6 +1433,8 @@ func (a *Account) GetOpenAIFormatBaseURL() string {
 		return DefaultZhipuPayGBaseURL
 	case PlatformDeepseek:
 		return DefaultDeepseekBaseURL
+	case PlatformXiaomi:
+		return DefaultXiaomiBaseURL
 	default:
 		return a.GetOpenAIBaseURL()
 	}

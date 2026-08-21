@@ -13,10 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jksn12/JKAPI/internal/config"
 	"github.com/jksn12/JKAPI/internal/pkg/openai"
 	"github.com/jksn12/JKAPI/internal/pkg/xai"
-	"github.com/gin-gonic/gin"
 	"github.com/tidwall/gjson"
 )
 
@@ -250,7 +250,7 @@ func (s *OpenAIGatewayService) SelectAccountForModelWithExclusions(ctx context.C
 // handler 调度入口仍需导出，保持导出名。）
 func NormalizeOpenAICompatiblePlatform(platform string) string {
 	switch platform {
-	case PlatformGrok, PlatformKimi, PlatformZhipu, PlatformDeepseek:
+	case PlatformGrok, PlatformKimi, PlatformZhipu, PlatformDeepseek, PlatformXiaomi:
 		return platform
 	default:
 		return PlatformOpenAI

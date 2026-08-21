@@ -439,7 +439,8 @@ export default {
       antigravity: 'Antigravity',
       kimi: 'Kimi',
       zhipu: '智谱 GLM',
-      deepseek: 'DeepSeek'
+      deepseek: 'DeepSeek',
+      xiaomi: 'MiMo（小米）'
     },
     // 检查模式（监控条目的工作方式）
     checkMode: {

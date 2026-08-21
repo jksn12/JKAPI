@@ -59,7 +59,7 @@ type RedeemCodeRepository interface {
 	Use(ctx context.Context, id, userID int64) error
 
 	List(ctx context.Context, params pagination.PaginationParams) ([]RedeemCode, *pagination.PaginationResult, error)
-	ListWithFilters(ctx context.Context, params pagination.PaginationParams, codeType, status, search string) ([]RedeemCode, *pagination.PaginationResult, error)
+	ListWithFilters(ctx context.Context, params pagination.PaginationParams, codeType, status, search, category string) ([]RedeemCode, *pagination.PaginationResult, error)
 	ListByUser(ctx context.Context, userID int64, limit int) ([]RedeemCode, error)
 	// ListByUserPaginated returns paginated balance/concurrency history for a specific user.
 	// codeType filter is optional - pass empty string to return all types.
@@ -97,6 +97,7 @@ type RedeemCodeBatchUpdateFields struct {
 	Status    *string
 	ExpiresAt NullableTimeUpdate
 	Notes     *string
+	Category  *string
 	GroupID   NullableInt64Update
 
 	// Core fields are intentionally modeled only so service validation can
@@ -109,6 +110,7 @@ func (f RedeemCodeBatchUpdateFields) HasChanges() bool {
 	return f.Status != nil ||
 		f.ExpiresAt.Set ||
 		f.Notes != nil ||
+		f.Category != nil ||
 		f.GroupID.Set ||
 		f.Type != nil ||
 		f.Value != nil
@@ -254,6 +256,7 @@ func (s *RedeemService) CreateCode(ctx context.Context, code *RedeemCode) error 
 	if code.Type == "" {
 		code.Type = RedeemTypeBalance
 	}
+	code.Category = NormalizeRedeemCodeCategory(code.Category)
 	if code.Type != RedeemTypeInvitation && code.Value == 0 {
 		return errors.New("value must not be zero")
 	}
@@ -316,6 +319,10 @@ func (s *RedeemService) BatchUpdate(ctx context.Context, input *RedeemCodeBatchU
 	}
 	if input.Fields.GroupID.Set && input.Fields.GroupID.Value != nil && *input.Fields.GroupID.Value <= 0 {
 		return nil, infraerrors.BadRequest("REDEEM_CODE_GROUP_ID_INVALID", "group_id must be positive")
+	}
+	if input.Fields.Category != nil {
+		category := NormalizeRedeemCodeCategory(*input.Fields.Category)
+		input.Fields.Category = &category
 	}
 
 	updated, err := s.redeemRepo.BatchUpdate(ctx, ids, input.Fields)

@@ -244,6 +244,7 @@ export default {
       columns: {
         code: '兑换码',
         type: '类型',
+        category: '分类',
         value: '面值',
         status: '状态',
         usedBy: '使用者',
@@ -267,6 +268,19 @@ export default {
       subscription: '订阅',
       invitation: '邀请码',
       invitationHint: '邀请码用于限制用户注册，使用后自动标记为已使用。',
+      category: '分类',
+      categoryPlaceholder: '例如：云猫充值、活动发放',
+      uncategorized: '未分类',
+      allCategories: '全部分类',
+      setCategory: '设置分类',
+      clearCategory: '清空分类',
+      categories: {
+        yunmaoRecharge: '云猫充值',
+        yunmaoRechargeAmount: '云猫充值 {amount}元',
+        manualCompensation: '手工补偿',
+        campaign: '活动发放',
+        subscriptionCode: '订阅卡密'
+      },
       allTypes: '全部类型',
       allStatus: '全部状态',
       unused: '未使用',
@@ -285,6 +299,7 @@ export default {
         status: '状态',
         expiresAt: '过期时间',
         notes: '备注',
+        category: '分类',
         group: '分组'
       },
       batchNotesPlaceholder: '输入新的备注，留空可清空备注',

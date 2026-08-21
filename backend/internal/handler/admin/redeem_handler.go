@@ -36,6 +36,7 @@ func NewRedeemHandler(adminService service.AdminService, redeemService *service.
 type GenerateRedeemCodesRequest struct {
 	Count         int        `json:"count" binding:"required,min=1,max=100"`
 	Type          string     `json:"type" binding:"required,oneof=balance concurrency subscription invitation"`
+	Category      string     `json:"category" binding:"omitempty,max=64"`
 	Value         float64    `json:"value"`
 	GroupID       *int64     `json:"group_id"`      // 订阅类型必填
 	ValidityDays  int        `json:"validity_days"` // 订阅类型使用，正数增加/负数退款扣减
@@ -48,6 +49,7 @@ type GenerateRedeemCodesRequest struct {
 type CreateAndRedeemCodeRequest struct {
 	Code          string     `json:"code" binding:"required,min=3,max=128"`
 	Type          string     `json:"type" binding:"omitempty,oneof=balance concurrency subscription invitation"` // 不传时默认 balance（向后兼容）
+	Category      string     `json:"category" binding:"omitempty,max=64"`
 	Value         float64    `json:"value" binding:"required"`
 	UserID        int64      `json:"user_id" binding:"required,gt=0"`
 	GroupID       *int64     `json:"group_id"`      // subscription 类型必填
@@ -88,6 +90,7 @@ func (h *RedeemHandler) List(c *gin.Context) {
 	codeType := c.Query("type")
 	status := c.Query("status")
 	search := c.Query("search")
+	category := service.NormalizeRedeemCodeCategory(c.Query("category"))
 	sortBy := c.DefaultQuery("sort_by", "id")
 	sortOrder := c.DefaultQuery("sort_order", "desc")
 	// 标准化和验证 search 参数
@@ -96,7 +99,7 @@ func (h *RedeemHandler) List(c *gin.Context) {
 		search = search[:100]
 	}
 
-	codes, total, err := h.adminService.ListRedeemCodes(c.Request.Context(), page, pageSize, codeType, status, search, sortBy, sortOrder)
+	codes, total, err := h.adminService.ListRedeemCodes(c.Request.Context(), page, pageSize, codeType, status, search, category, sortBy, sortOrder)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
@@ -146,6 +149,7 @@ func (h *RedeemHandler) Generate(c *gin.Context) {
 		codes, execErr := h.adminService.GenerateRedeemCodes(ctx, &service.GenerateRedeemCodesInput{
 			Count:        req.Count,
 			Type:         req.Type,
+			Category:     req.Category,
 			Value:        req.Value,
 			GroupID:      req.GroupID,
 			ValidityDays: req.ValidityDays,
@@ -212,6 +216,7 @@ func (h *RedeemHandler) CreateAndRedeem(c *gin.Context) {
 		createErr := h.redeemService.CreateCode(ctx, &service.RedeemCode{
 			Code:         req.Code,
 			Type:         req.Type,
+			Category:     req.Category,
 			Value:        req.Value,
 			Status:       service.StatusUnused,
 			Notes:        req.Notes,
@@ -338,10 +343,11 @@ func (h *RedeemHandler) BatchUpdate(c *gin.Context) {
 
 func redeemBatchUpdateFieldsFromDTO(in dto.BatchUpdateRedeemCodeFields) service.RedeemCodeBatchUpdateFields {
 	out := service.RedeemCodeBatchUpdateFields{
-		Status: in.Status,
-		Notes:  in.Notes,
-		Type:   in.Type,
-		Value:  in.Value,
+		Status:   in.Status,
+		Notes:    in.Notes,
+		Category: in.Category,
+		Type:     in.Type,
+		Value:    in.Value,
 	}
 	if in.ExpiresAt.Set {
 		out.ExpiresAt = service.NullableTimeUpdate{Set: true, Value: in.ExpiresAt.Value}
@@ -394,6 +400,7 @@ func (h *RedeemHandler) Export(c *gin.Context) {
 	codeType := c.Query("type")
 	status := c.Query("status")
 	search := strings.TrimSpace(c.Query("search"))
+	category := service.NormalizeRedeemCodeCategory(c.Query("category"))
 	sortBy := c.DefaultQuery("sort_by", "id")
 	sortOrder := c.DefaultQuery("sort_order", "desc")
 	if len(search) > 100 {
@@ -401,7 +408,7 @@ func (h *RedeemHandler) Export(c *gin.Context) {
 	}
 
 	// Get all codes without pagination (use large page size)
-	codes, _, err := h.adminService.ListRedeemCodes(c.Request.Context(), 1, 10000, codeType, status, search, sortBy, sortOrder)
+	codes, _, err := h.adminService.ListRedeemCodes(c.Request.Context(), 1, 10000, codeType, status, search, category, sortBy, sortOrder)
 	if err != nil {
 		response.ErrorFrom(c, err)
 		return
@@ -412,7 +419,7 @@ func (h *RedeemHandler) Export(c *gin.Context) {
 	writer := csv.NewWriter(&buf)
 
 	// Write header
-	if err := writer.Write([]string{"id", "code", "type", "value", "status", "used_by", "used_by_email", "used_at", "expires_at", "created_at"}); err != nil {
+	if err := writer.Write([]string{"id", "code", "type", "category", "value", "status", "used_by", "used_by_email", "used_at", "expires_at", "created_at"}); err != nil {
 		response.InternalError(c, "Failed to export redeem codes: "+err.Error())
 		return
 	}
@@ -439,6 +446,7 @@ func (h *RedeemHandler) Export(c *gin.Context) {
 			fmt.Sprintf("%d", code.ID),
 			code.Code,
 			code.Type,
+			code.Category,
 			fmt.Sprintf("%.2f", code.Value),
 			code.Status,
 			usedBy,

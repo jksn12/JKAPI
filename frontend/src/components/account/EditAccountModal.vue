@@ -2893,13 +2893,14 @@ const isCNApiKeyAccount = computed(
     props.account?.type === 'apikey' &&
     (props.account.platform === 'kimi' ||
       props.account.platform === 'zhipu' ||
-      props.account.platform === 'deepseek')
+      props.account.platform === 'deepseek' ||
+      props.account.platform === 'xiaomi')
 )
 // CnBaseUrlPresets 的 platform prop 是平台字面量联合类型，模板里不能写
 // `as` 断言（其中的 `|` 会被 eslint 误判为 Vue2 filter 语法），经此 computed 传递。
-const cnPresetPlatform = computed<'kimi' | 'zhipu' | 'deepseek'>(() => {
+const cnPresetPlatform = computed<'kimi' | 'zhipu' | 'deepseek' | 'xiaomi'>(() => {
   const platform = props.account?.platform
-  if (platform === 'kimi' || platform === 'zhipu' || platform === 'deepseek') {
+  if (platform === 'kimi' || platform === 'zhipu' || platform === 'deepseek' || platform === 'xiaomi') {
     return platform
   }
   return 'kimi'
@@ -2914,7 +2915,7 @@ const syncingForm = ref(false)
 const cnAccountModeOptions = computed<Array<{ value: CnAccountMode; labelKey: 'payg' | 'coding' }>>(
   () => {
     // DeepSeek 无 coding 套餐（与创建弹窗一致），仅保留按量付费。
-    if (props.account?.platform === 'deepseek') {
+    if (props.account?.platform === 'deepseek' || props.account?.platform === 'xiaomi') {
       return [{ value: 'payg', labelKey: 'payg' }]
     }
     return [
@@ -2930,6 +2931,9 @@ const cnProtocolOptions = computed<Array<{ value: CnApiProtocol; labelKey: strin
   ]
   if (props.account?.platform === 'deepseek') {
     opts.push({ value: 'responses', labelKey: 'responses' })
+  }
+  if (props.account?.platform === 'xiaomi') {
+    return [{ value: 'chat_completions', labelKey: 'chatCompletions' }]
   }
   return opts
 })
@@ -3404,7 +3408,8 @@ const defaultBaseUrl = computed(() => {
   if (
     props.account?.platform === 'kimi' ||
     props.account?.platform === 'zhipu' ||
-    props.account?.platform === 'deepseek'
+    props.account?.platform === 'deepseek' ||
+    props.account?.platform === 'xiaomi'
   ) {
     return defaultCNBaseUrl(props.account.platform, editAccountMode.value, editApiProtocol.value)
   }
@@ -3765,7 +3770,7 @@ const syncFormFromAccount = (newAccount: Account | null) => {
     const credentials = newAccount.credentials as Record<string, unknown>
     // 国产供应商：读取 account_mode 与 api_protocol 作为可编辑初始值
     // （编辑弹窗允许修正两者，用于修复早期存错默认值的账号）。
-    if (newAccount.platform === 'kimi' || newAccount.platform === 'zhipu' || newAccount.platform === 'deepseek') {
+    if (newAccount.platform === 'kimi' || newAccount.platform === 'zhipu' || newAccount.platform === 'deepseek' || newAccount.platform === 'xiaomi') {
       editAccountMode.value = credentials.account_mode === 'coding' ? 'coding' : 'payg'
       const storedProtocol = credentials.api_protocol
       editApiProtocol.value =
@@ -3783,7 +3788,8 @@ const syncFormFromAccount = (newAccount: Account | null) => {
             ? 'https://api.x.ai/v1'
             : newAccount.platform === 'kimi' ||
                 newAccount.platform === 'zhipu' ||
-                newAccount.platform === 'deepseek'
+                newAccount.platform === 'deepseek' ||
+                newAccount.platform === 'xiaomi'
               ? defaultCNBaseUrl(newAccount.platform, editAccountMode.value, editApiProtocol.value)
               : 'https://api.anthropic.com'
     editBaseUrl.value = (credentials.base_url as string) || platformDefaultUrl

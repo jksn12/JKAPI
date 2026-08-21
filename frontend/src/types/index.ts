@@ -527,7 +527,7 @@ export interface PaginationConfig {
 
 // ==================== API Key & Group Types ====================
 
-export type GroupPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | 'kimi' | 'zhipu' | 'deepseek' | 'composite'
+export type GroupPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | 'kimi' | 'zhipu' | 'deepseek' | 'xiaomi' | 'composite'
 
 export type VideoModelPrices = Record<string, Record<string, number>>
 
@@ -884,7 +884,7 @@ export interface UpdateGroupRequest {
 
 // ==================== Account & Proxy Types ====================
 
-export type AccountPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | 'kimi' | 'zhipu' | 'deepseek'
+export type AccountPlatform = 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok' | 'kimi' | 'zhipu' | 'deepseek' | 'xiaomi'
 export type AccountType = 'oauth' | 'setup-token' | 'apikey' | 'upstream' | 'bedrock' | 'service_account'
 export type OAuthAddMethod = 'oauth' | 'setup-token'
 export type ProxyProtocol = 'http' | 'https' | 'socks5' | 'socks5h'
@@ -1742,6 +1742,7 @@ export interface RedeemCode {
   id: number
   code: string
   type: RedeemCodeType
+  category: string
   value: number
   status: 'active' | 'used' | 'expired' | 'unused' | 'disabled'
   used_by: number | null
@@ -1759,6 +1760,7 @@ export interface RedeemCode {
 export interface GenerateRedeemCodesRequest {
   count: number
   type: RedeemCodeType
+  category?: string
   value: number
   group_id?: number | null // 订阅类型专用
   validity_days?: number // 订阅类型专用
@@ -1770,6 +1772,7 @@ export interface BatchUpdateRedeemCodeFields {
   status?: 'unused' | 'disabled'
   expires_at?: string | null
   notes?: string
+  category?: string
   group_id?: number | null
 }
 

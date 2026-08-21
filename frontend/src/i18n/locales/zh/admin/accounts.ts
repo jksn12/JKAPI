@@ -310,6 +310,7 @@ export default {
         kimi: 'Kimi',
         zhipu: 'Zhipu GLM',
         deepseek: 'DeepSeek',
+        xiaomi: 'MiMo（小米）',
       },
       cnProviders: {
         accountMode: {
