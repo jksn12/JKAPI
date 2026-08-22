@@ -1,6 +1,6 @@
 <template>
   <!-- Custom Home Content: Full Page Mode -->
-  <div v-if="hasHomeContent" class="min-h-screen">
+  <div v-if="hasHomeContent" ref="customHomeRoot" class="min-h-screen">
     <!-- iframe mode -->
     <iframe
       v-if="isHomeContentUrl"
@@ -342,7 +342,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
@@ -362,6 +362,7 @@ const docUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.doc_url
 const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
 const hasHomeContent = computed(() => homeContent.value.trim().length > 0)
 const compactHomeEnabled = computed(() => appStore.cachedPublicSettings?.compact_home_enabled === true)
+const customHomeRoot = ref<HTMLElement | null>(null)
 
 // Check if homeContent is a URL (for iframe display)
 const isHomeContentUrl = computed(() => {
@@ -472,6 +473,73 @@ const userInitial = computed(() => {
 // Current year for footer
 const currentYear = computed(() => new Date().getFullYear())
 
+let cleanupHomeCopyHandler: (() => void) | null = null
+
+async function copyText(text: string) {
+  const value = text.trim()
+  if (!value) return false
+
+  try {
+    await navigator.clipboard.writeText(value)
+    return true
+  } catch {
+    const textarea = document.createElement('textarea')
+    textarea.value = value
+    textarea.setAttribute('readonly', 'true')
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+    const success = document.execCommand('copy')
+    document.body.removeChild(textarea)
+    return success
+  }
+}
+
+async function handleHomeCopyClick(event: MouseEvent) {
+  const target = event.target as HTMLElement | null
+  const button = target?.closest<HTMLElement>('[data-copy-text], [data-copy-target]')
+  if (!button) return
+
+  const copyTarget = button.getAttribute('data-copy-target')
+  const copyTextValue = button.getAttribute('data-copy-text')
+  let textToCopy = copyTextValue || ''
+
+  if (copyTarget) {
+    const container = customHomeRoot.value
+    const source = container?.querySelector<HTMLElement>(copyTarget)
+    textToCopy = source?.innerText || source?.textContent || textToCopy
+  }
+
+  if (!textToCopy) return
+
+  const originalLabel = button.textContent || '复制'
+  const copied = await copyText(textToCopy)
+  if (!copied) return
+
+  button.textContent = '已复制'
+  button.setAttribute('aria-live', 'polite')
+  window.setTimeout(() => {
+    button.textContent = originalLabel
+  }, 1500)
+}
+
+async function bindHomeCopyHandlers() {
+  cleanupHomeCopyHandler?.()
+  cleanupHomeCopyHandler = null
+
+  if (!hasHomeContent.value || isHomeContentUrl.value) return
+
+  await nextTick()
+  const root = customHomeRoot.value
+  if (!root) return
+
+  root.addEventListener('click', handleHomeCopyClick)
+  cleanupHomeCopyHandler = () => {
+    root.removeEventListener('click', handleHomeCopyClick)
+  }
+}
+
 // Toggle theme
 function toggleTheme() {
   isDark.value = !isDark.value
@@ -501,5 +569,15 @@ onMounted(() => {
   if (!appStore.publicSettingsLoaded) {
     appStore.fetchPublicSettings()
   }
+
+  void bindHomeCopyHandlers()
+})
+
+watch([hasHomeContent, isHomeContentUrl, homeContent], () => {
+  void bindHomeCopyHandlers()
+})
+
+onBeforeUnmount(() => {
+  cleanupHomeCopyHandler?.()
 })
 </script>

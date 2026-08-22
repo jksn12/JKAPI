@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest'
 
 const componentPath = resolve(dirname(fileURLToPath(import.meta.url)), '../AppSidebar.vue')
 const componentSource = readFileSync(componentPath, 'utf8')
+const headerPath = resolve(dirname(fileURLToPath(import.meta.url)), '../AppHeader.vue')
+const headerSource = readFileSync(headerPath, 'utf8')
 const stylePath = resolve(dirname(fileURLToPath(import.meta.url)), '../../../style.css')
 const styleSource = readFileSync(stylePath, 'utf8')
 
@@ -39,6 +41,27 @@ describe('AppSidebar scroll position persistence', () => {
     expect(componentSource).toContain('onMounted')
     expect(componentSource).toContain('appStore.sidebarScrollTop')
     expect(componentSource).toContain('nextTick')
+  })
+})
+
+describe('AppSidebar model plaza navigation', () => {
+  it('does not render model plaza as a sidebar user nav item', () => {
+    expect(componentSource).not.toContain('const flagModelPlaza = makeSidebarFlag(FeatureFlags.modelPlaza)')
+    expect(componentSource).not.toContain("{ path: '/model-plaza', label: t('nav.modelPlaza')")
+  })
+
+  it('keeps model plaza in the header behind the public feature flag', () => {
+    expect(headerSource).toContain('const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))')
+    expect(headerSource).toContain('v-if="authStore.isAuthenticated && modelPlazaEnabled"')
+    expect(headerSource).not.toContain('v-if="user && modelPlazaEnabled && authStore.isAdmin"')
+    expect(headerSource).toContain(":to=\"{ path: '/model-plaza', query: { embedded: '1' } }\"")
+    expect(headerSource).not.toContain('modelPlazaHeaderTarget')
+    expect(headerSource).not.toContain('`/custom/${customItem.id}`')
+  })
+
+  it('deduplicates custom menu items that already point at model plaza', () => {
+    expect(componentSource).toContain('!isModelPlazaMenuItem(item)')
+    expect(componentSource).toContain("import { isModelPlazaMenuItem } from '@/utils/modelPlazaMenu'")
   })
 })
 

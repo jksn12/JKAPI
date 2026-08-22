@@ -54,6 +54,8 @@ interface MockAuthState {
   isSimpleMode: boolean
   backendModeEnabled: boolean
   hasPendingAuthSession: boolean
+  modelPlazaEnabled?: boolean
+  modelPlazaRequireAuth?: boolean
   setupNeedsSetup?: boolean
 }
 
@@ -83,8 +85,20 @@ function simulateGuard(
       }
       return authState.isAdmin ? '/admin/dashboard' : '/dashboard'
     }
+    if (toPath === '/model-plaza') {
+      if (authState.modelPlazaEnabled === false) {
+        return authState.isAuthenticated
+          ? authState.isAdmin
+            ? '/admin/dashboard'
+            : '/dashboard'
+          : '/home'
+      }
+      if (authState.modelPlazaRequireAuth === true && !authState.isAuthenticated) {
+        return '/login'
+      }
+    }
     if (authState.backendModeEnabled && !authState.isAuthenticated) {
-      const allowed = ['/login', '/key-usage', '/setup', '/payment/result']
+      const allowed = ['/login', '/key-usage', '/setup', '/payment/result', '/model-plaza']
       const callbackPaths = [
         '/auth/callback',
         '/auth/linuxdo/callback',
@@ -133,7 +147,7 @@ function simulateGuard(
     if (authState.isAuthenticated && authState.isAdmin) {
       return null
     }
-    const allowed = ['/login', '/key-usage', '/setup', '/payment/result']
+    const allowed = ['/login', '/key-usage', '/setup', '/payment/result', '/model-plaza']
     const callbackPaths = [
       '/auth/callback',
       '/auth/linuxdo/callback',
@@ -370,6 +384,48 @@ describe('路由守卫逻辑', () => {
       }
       const redirect = simulateGuard('/key-usage', { requiresAuth: false }, authState)
       expect(redirect).toBeNull()
+    })
+
+    it('unauthenticated: model plaza is allowed when login is optional', () => {
+      const authState: MockAuthState = {
+        isAuthenticated: false,
+        isAdmin: false,
+        isSimpleMode: false,
+        backendModeEnabled: true,
+        hasPendingAuthSession: false,
+        modelPlazaEnabled: true,
+        modelPlazaRequireAuth: false,
+      }
+      const redirect = simulateGuard('/model-plaza', { requiresAuth: false }, authState)
+      expect(redirect).toBeNull()
+    })
+
+    it('authenticated regular user: model plaza remains allowed in backend mode', () => {
+      const authState: MockAuthState = {
+        isAuthenticated: true,
+        isAdmin: false,
+        isSimpleMode: false,
+        backendModeEnabled: true,
+        hasPendingAuthSession: false,
+        modelPlazaEnabled: true,
+        modelPlazaRequireAuth: false,
+      }
+      const redirect = simulateGuard('/model-plaza', { requiresAuth: false }, authState)
+      expect(redirect).toBeNull()
+    })
+
+    it('unauthenticated: model plaza still requires login when configured', () => {
+      const authState: MockAuthState = {
+        isAuthenticated: false,
+        isAdmin: false,
+        isSimpleMode: false,
+        backendModeEnabled: true,
+        hasPendingAuthSession: false,
+        modelPlazaEnabled: true,
+        modelPlazaRequireAuth: true,
+      }
+      const redirect = simulateGuard('/model-plaza', { requiresAuth: false }, authState)
+      expect(redirect).toBe('/login')
     })
 
     it('unauthenticated: /setup is allowed', () => {

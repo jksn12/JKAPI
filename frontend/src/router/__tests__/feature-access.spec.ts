@@ -25,6 +25,8 @@ const appStore = vi.hoisted(() => ({
   cachedPublicSettings: null as null | {
     payment_enabled?: boolean
     risk_control_enabled?: boolean
+    model_plaza_enabled?: boolean
+    model_plaza_require_auth?: boolean
     custom_menu_items?: []
   },
   fetchPublicSettings: vi.fn(),
@@ -114,6 +116,8 @@ describe('feature route guard', () => {
     authStore.isAuthenticated = true
     authStore.isAdmin = false
     authStore.isSimpleMode = false
+    authStore.hasPendingAuthSession = false
+    appStore.backendModeEnabled = false
     appStore.publicSettingsLoaded = false
     appStore.cachedPublicSettings = null
     appStore.fetchPublicSettings.mockReset()
@@ -173,5 +177,59 @@ describe('feature route guard', () => {
     expect(appStore.fetchPublicSettings).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledOnce()
     expect(next).toHaveBeenCalledWith(target)
+  })
+
+  it('allows a regular user to open model plaza in backend mode', async () => {
+    authStore.isAuthenticated = true
+    authStore.isAdmin = false
+    appStore.backendModeEnabled = true
+    appStore.cachedPublicSettings = {
+      model_plaza_enabled: true,
+      model_plaza_require_auth: false,
+    }
+    appStore.publicSettingsLoaded = true
+
+    const { navigation, next } = runGuard({ requiresAuth: false }, '/model-plaza')
+    await navigation
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(next).toHaveBeenCalledWith()
+  })
+
+  it('allows anonymous model plaza access in backend mode when login is optional', async () => {
+    authStore.isAuthenticated = false
+    authStore.isAdmin = false
+    appStore.backendModeEnabled = true
+    appStore.cachedPublicSettings = {
+      model_plaza_enabled: true,
+      model_plaza_require_auth: false,
+    }
+    appStore.publicSettingsLoaded = true
+
+    const { navigation, next } = runGuard({ requiresAuth: false }, '/model-plaza')
+    await navigation
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(next).toHaveBeenCalledWith()
+  })
+
+  it('still requires login for anonymous model plaza access when configured', async () => {
+    authStore.isAuthenticated = false
+    authStore.isAdmin = false
+    appStore.backendModeEnabled = true
+    appStore.cachedPublicSettings = {
+      model_plaza_enabled: true,
+      model_plaza_require_auth: true,
+    }
+    appStore.publicSettingsLoaded = true
+
+    const { navigation, next } = runGuard({ requiresAuth: false }, '/model-plaza')
+    await navigation
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(next).toHaveBeenCalledWith({
+      path: '/login',
+      query: { redirect: '/model-plaza' },
+    })
   })
 })
