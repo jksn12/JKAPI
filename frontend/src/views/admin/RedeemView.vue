@@ -25,6 +25,24 @@
             class="w-36"
             @change="loadCodes"
           />
+          <Select
+            v-model="filters.category"
+            :options="categoryFilterOptions"
+            :placeholder="t('admin.redeem.filterCategoryPlaceholder')"
+            searchable
+            clearable
+            class="w-56"
+            @change="handleFilterChange"
+          />
+          <Select
+            v-model="filters.value"
+            :options="valueFilterOptions"
+            :placeholder="t('admin.redeem.filterValuePlaceholder')"
+            searchable
+            clearable
+            class="w-56"
+            @change="handleFilterChange"
+          />
 
           <!-- Right: Action buttons -->
           <div class="flex flex-1 flex-wrap items-center justify-end gap-2">
@@ -153,6 +171,12 @@
               ]"
             >
               {{ t('admin.redeem.status.' + value) }}
+            </span>
+          </template>
+
+          <template #cell-category="{ value }">
+            <span class="text-sm text-gray-600 dark:text-gray-300">
+              {{ value || '-' }}
             </span>
           </template>
 
@@ -286,6 +310,24 @@
             <div>
               <label class="input-label">{{ t('admin.redeem.codeType') }}</label>
               <Select v-model="generateForm.type" :options="typeOptions" />
+            </div>
+            <div>
+              <label class="input-label">{{ t('admin.redeem.category') }}</label>
+              <input
+                v-model.trim="generateForm.category"
+                type="text"
+                maxlength="255"
+                class="input"
+                list="redeem-category-suggestions"
+                :placeholder="t('admin.redeem.categoryPlaceholder')"
+              />
+              <datalist id="redeem-category-suggestions">
+                <option
+                  v-for="category in redeemCategories"
+                  :key="category"
+                  :value="category"
+                />
+              </datalist>
             </div>
             <!-- 余额/并发类型：显示数值输入 -->
             <div v-if="generateForm.type !== 'subscription' && generateForm.type !== 'invitation'">
@@ -483,6 +525,25 @@
                 class="input"
                 :placeholder="t('admin.redeem.batchNotesPlaceholder')"
               ></textarea>
+            </div>
+
+            <div class="space-y-2">
+              <label class="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                <input
+                  v-model="batchUpdateForm.update_category"
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                {{ t('admin.redeem.batchFields.category') }}
+              </label>
+              <input
+                v-if="batchUpdateForm.update_category"
+                v-model.trim="batchUpdateForm.category"
+                type="text"
+                maxlength="255"
+                class="input"
+                :placeholder="t('admin.redeem.batchCategoryPlaceholder')"
+              />
             </div>
 
             <div class="space-y-2">
@@ -725,6 +786,7 @@ const columns = computed<Column[]>(() => [
   { key: 'type', label: t('admin.redeem.columns.type'), sortable: true },
   { key: 'value', label: t('admin.redeem.columns.value'), sortable: true },
   { key: 'status', label: t('admin.redeem.columns.status'), sortable: true },
+  { key: 'category', label: t('admin.redeem.columns.category'), sortable: true },
   { key: 'used_by', label: t('admin.redeem.columns.usedBy') },
   { key: 'used_at', label: t('admin.redeem.columns.usedAt'), sortable: true },
   { key: 'expires_at', label: t('admin.redeem.columns.expiresAt'), sortable: true },
@@ -754,6 +816,22 @@ const filterStatusOptions = computed(() => [
   { value: 'disabled', label: t('admin.redeem.status.disabled') }
 ])
 
+const priorityRedeemValues = ['1', '5', '10', '20', '50', '100']
+const valueFilterOptions = computed(() => {
+  const available = new Set(redeemValues.value)
+  const priority = priorityRedeemValues.filter((value) => available.has(value))
+  const extra = redeemValues.value.filter((value) => !priorityRedeemValues.includes(value))
+  return [
+    { value: '', label: t('admin.redeem.allValues') },
+    ...[...priority, ...extra].map((value) => ({ value, label: formatRedeemValueLabel(value) }))
+  ]
+})
+
+const categoryFilterOptions = computed(() => [
+  { value: '', label: t('admin.redeem.allCategories') },
+  ...redeemCategories.value.map((category) => ({ value: category, label: category }))
+])
+
 const batchStatusOptions = computed(() => [
   { value: 'unused', label: t('admin.redeem.status.unused') },
   { value: 'disabled', label: t('admin.redeem.status.disabled') }
@@ -765,13 +843,17 @@ const batchExpiryModeOptions = computed(() => [
 ])
 
 const codes = ref<RedeemCode[]>([])
+const redeemValues = ref<string[]>([])
+const redeemCategories = ref<string[]>([])
 const loading = ref(false)
 const generating = ref(false)
 const batchUpdating = ref(false)
 const searchQuery = ref('')
 const filters = reactive({
   type: '',
-  status: ''
+  status: '',
+  value: '',
+  category: ''
 })
 const pagination = reactive({
   page: 1,
@@ -813,6 +895,8 @@ const batchUpdateForm = reactive({
   expires_at_local: '',
   update_notes: false,
   notes: '',
+  update_category: false,
+  category: '',
   update_group_id: false,
   group_id: null as number | null
 })
@@ -831,6 +915,7 @@ const generateForm = reactive({
   type: 'balance' as RedeemCodeType,
   value: 10,
   count: 1,
+  category: '',
   group_id: null as number | null,
   validity_days: 30,
   expiry_option: 'never' as RedeemCodeExpiryOption,
@@ -852,6 +937,8 @@ watch(
 const buildRedeemQueryFilters = () => ({
   type: (filters.type || undefined) as RedeemCodeType | undefined,
   status: (filters.status || undefined) as 'used' | 'expired' | 'unused' | 'disabled' | undefined,
+  value: filters.value || undefined,
+  category: filters.category || undefined,
   search: searchQuery.value || undefined,
   sort_by: sortState.sort_by,
   sort_order: sortState.sort_order
@@ -904,6 +991,76 @@ const handleSearch = () => {
     pagination.page = 1
     loadCodes()
   }, 300)
+}
+
+const handleFilterChange = () => {
+  pagination.page = 1
+  loadCodes()
+}
+
+const formatRedeemValueLabel = (value: string) => {
+  const amount = Number(value)
+  if (!Number.isFinite(amount)) return value
+  return `${amount.toFixed(amount % 1 === 0 ? 0 : 2)} 元`
+}
+
+const normalizeRedeemValue = (value: number) => {
+  if (!Number.isFinite(value) || value <= 0) return ''
+  return String(Number(value.toFixed(6)))
+}
+
+const normalizeRedeemCategory = (category?: string | null) => category?.trim() || ''
+
+const refreshRedeemValues = async () => {
+  try {
+    const values = new Set<string>()
+    let page = 1
+    let pages = 1
+
+    do {
+      const response = await adminAPI.redeem.list(page, 1000, {
+        sort_by: 'value',
+        sort_order: 'asc'
+      })
+      response.items
+        .map((code) => normalizeRedeemValue(code.value))
+        .filter((value): value is string => Boolean(value))
+        .forEach((value) => values.add(value))
+
+      pages = response.pages
+      page += 1
+    } while (page <= pages)
+
+    redeemValues.value = [...values].sort((a, b) => Number(a) - Number(b))
+  } catch (error) {
+    console.error('Error loading redeem values:', error)
+  }
+}
+
+const refreshRedeemCategories = async () => {
+  try {
+    const categories = new Set<string>()
+    let page = 1
+    let pages = 1
+
+    do {
+      const response = await adminAPI.redeem.list(page, 1000, {
+        sort_by: 'category',
+        sort_order: 'asc'
+      })
+      response.items
+        .map((code) => normalizeRedeemCategory(code.category))
+        .filter((category): category is string => Boolean(category))
+        .forEach((category) => categories.add(category))
+
+      pages = response.pages
+      page += 1
+    } while (page <= pages)
+
+    redeemCategories.value = [...categories].sort((a, b) => a.localeCompare(b, 'zh-Hans-CN'))
+  } catch (error) {
+    console.error('Error loading redeem categories:', error)
+  }
 }
 
 const handlePageChange = (page: number) => {
@@ -971,6 +1128,8 @@ const resetBatchUpdateForm = () => {
   )
   batchUpdateForm.update_notes = false
   batchUpdateForm.notes = ''
+  batchUpdateForm.update_category = false
+  batchUpdateForm.category = ''
   batchUpdateForm.update_group_id = false
   batchUpdateForm.group_id = null
 }
@@ -1009,6 +1168,9 @@ const buildBatchUpdateFields = (): BatchUpdateRedeemCodeFields | null => {
   if (batchUpdateForm.update_notes) {
     fields.notes = batchUpdateForm.notes
   }
+  if (batchUpdateForm.update_category) {
+    fields.category = batchUpdateForm.category
+  }
   if (batchUpdateForm.update_group_id) {
     fields.group_id =
       batchUpdateForm.group_id == null ? null : Number(batchUpdateForm.group_id)
@@ -1038,17 +1200,21 @@ const handleGenerateCodes = async () => {
       generateForm.value,
       generateForm.type === 'subscription' ? generateForm.group_id : undefined,
       generateForm.type === 'subscription' ? generateForm.validity_days : undefined,
-      expiresInDays
+      expiresInDays,
+      generateForm.category
     )
     showGenerateDialog.value = false
     generatedCodes.value = result
     showResultDialog.value = true
     // 重置表单
     generateForm.group_id = null
+    generateForm.category = ''
     generateForm.validity_days = 30
     generateForm.expiry_option = 'never'
     generateForm.custom_expiry_days = 7
     loadCodes()
+    refreshRedeemValues()
+    refreshRedeemCategories()
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.redeem.failedToGenerate'))
     console.error('Error generating codes:', error)
@@ -1102,6 +1268,7 @@ const confirmDelete = async () => {
     showDeleteDialog.value = false
     deletingCode.value = null
     loadCodes()
+    refreshRedeemCategories()
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.redeem.failedToDelete'))
     console.error('Error deleting code:', error)
@@ -1124,6 +1291,7 @@ const confirmDeleteUnused = async () => {
     appStore.showSuccess(t('admin.redeem.codesDeleted', { count: result.deleted }))
     showDeleteUnusedDialog.value = false
     loadCodes()
+    refreshRedeemCategories()
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.redeem.failedToDeleteUnused'))
     console.error('Error deleting unused codes:', error)
@@ -1141,6 +1309,7 @@ const handleBatchUpdate = async () => {
     batchUpdateForm.update_status ||
     batchUpdateForm.update_expires_at ||
     batchUpdateForm.update_notes ||
+    batchUpdateForm.update_category ||
     batchUpdateForm.update_group_id
   if (!hasSelectedFields) {
     appStore.showError(t('admin.redeem.noBatchFieldsSelected'))
@@ -1159,6 +1328,8 @@ const handleBatchUpdate = async () => {
     showBatchUpdateDialog.value = false
     clearSelectedCodes()
     loadCodes()
+    refreshRedeemValues()
+    refreshRedeemCategories()
   } catch (error: any) {
     appStore.showError(error.response?.data?.detail || t('admin.redeem.failedToBatchUpdate'))
     console.error('Error batch updating codes:', error)
@@ -1179,6 +1350,8 @@ const loadSubscriptionGroups = async () => {
 
 onMounted(() => {
   loadCodes()
+  refreshRedeemValues()
+  refreshRedeemCategories()
   loadSubscriptionGroups()
 })
 

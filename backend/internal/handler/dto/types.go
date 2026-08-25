@@ -401,6 +401,7 @@ type RedeemCode struct {
 	Status    string     `json:"status"`
 	UsedBy    *int64     `json:"used_by"`
 	UsedAt    *time.Time `json:"used_at"`
+	Category  string     `json:"category"`
 	CreatedAt time.Time  `json:"created_at"`
 	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 
@@ -465,6 +466,7 @@ type BatchUpdateRedeemCodeFields struct {
 	Status    *string            `json:"status,omitempty"`
 	ExpiresAt NullableTimeField  `json:"expires_at,omitempty"`
 	Notes     *string            `json:"notes,omitempty"`
+	Category  *string            `json:"category,omitempty"`
 	GroupID   NullableInt64Field `json:"group_id,omitempty"`
 
 	Type  *string  `json:"type,omitempty"`

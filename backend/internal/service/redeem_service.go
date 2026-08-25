@@ -59,7 +59,7 @@ type RedeemCodeRepository interface {
 	Use(ctx context.Context, id, userID int64) error
 
 	List(ctx context.Context, params pagination.PaginationParams) ([]RedeemCode, *pagination.PaginationResult, error)
-	ListWithFilters(ctx context.Context, params pagination.PaginationParams, codeType, status, search string) ([]RedeemCode, *pagination.PaginationResult, error)
+	ListWithFilters(ctx context.Context, params pagination.PaginationParams, codeType, status, search, category, value string) ([]RedeemCode, *pagination.PaginationResult, error)
 	ListByUser(ctx context.Context, userID int64, limit int) ([]RedeemCode, error)
 	// ListByUserPaginated returns paginated balance/concurrency history for a specific user.
 	// codeType filter is optional - pass empty string to return all types.
@@ -70,9 +70,10 @@ type RedeemCodeRepository interface {
 
 // GenerateCodesRequest 生成兑换码请求
 type GenerateCodesRequest struct {
-	Count int     `json:"count"`
-	Value float64 `json:"value"`
-	Type  string  `json:"type"`
+	Count    int     `json:"count"`
+	Value    float64 `json:"value"`
+	Type     string  `json:"type"`
+	Category string  `json:"category"`
 }
 
 // RedeemCodeResponse 兑换码响应
@@ -97,6 +98,7 @@ type RedeemCodeBatchUpdateFields struct {
 	Status    *string
 	ExpiresAt NullableTimeUpdate
 	Notes     *string
+	Category  *string
 	GroupID   NullableInt64Update
 
 	// Core fields are intentionally modeled only so service validation can
@@ -109,6 +111,7 @@ func (f RedeemCodeBatchUpdateFields) HasChanges() bool {
 	return f.Status != nil ||
 		f.ExpiresAt.Set ||
 		f.Notes != nil ||
+		f.Category != nil ||
 		f.GroupID.Set ||
 		f.Type != nil ||
 		f.Value != nil
@@ -225,10 +228,11 @@ func (s *RedeemService) GenerateCodes(ctx context.Context, req GenerateCodesRequ
 		}
 
 		codes = append(codes, RedeemCode{
-			Code:   code,
-			Type:   codeType,
-			Value:  value,
-			Status: StatusUnused,
+			Code:     code,
+			Type:     codeType,
+			Value:    value,
+			Status:   StatusUnused,
+			Category: strings.TrimSpace(req.Category),
 		})
 	}
 
@@ -260,6 +264,7 @@ func (s *RedeemService) CreateCode(ctx context.Context, code *RedeemCode) error 
 	if code.Status == "" {
 		code.Status = StatusUnused
 	}
+	code.Category = strings.TrimSpace(code.Category)
 	if code.IsExpired() {
 		return ErrRedeemCodeExpired
 	}
@@ -316,6 +321,13 @@ func (s *RedeemService) BatchUpdate(ctx context.Context, input *RedeemCodeBatchU
 	}
 	if input.Fields.GroupID.Set && input.Fields.GroupID.Value != nil && *input.Fields.GroupID.Value <= 0 {
 		return nil, infraerrors.BadRequest("REDEEM_CODE_GROUP_ID_INVALID", "group_id must be positive")
+	}
+	if input.Fields.Category != nil {
+		category := strings.TrimSpace(*input.Fields.Category)
+		if len(category) > 255 {
+			return nil, infraerrors.BadRequest("REDEEM_CODE_CATEGORY_TOO_LONG", "category must be at most 255 characters")
+		}
+		input.Fields.Category = &category
 	}
 
 	updated, err := s.redeemRepo.BatchUpdate(ctx, ids, input.Fields)

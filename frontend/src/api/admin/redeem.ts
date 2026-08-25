@@ -26,6 +26,8 @@ export async function list(
     type?: RedeemCodeType
     status?: 'active' | 'used' | 'expired' | 'unused' | 'disabled'
     search?: string
+    category?: string
+    value?: string
     sort_by?: string
     sort_order?: 'asc' | 'desc'
   },
@@ -70,7 +72,8 @@ export async function generate(
   value: number,
   groupId?: number | null,
   validityDays?: number,
-  expiresInDays?: number | null
+  expiresInDays?: number | null,
+  category?: string
 ): Promise<RedeemCode[]> {
   const payload: GenerateRedeemCodesRequest = {
     count,
@@ -87,6 +90,10 @@ export async function generate(
   }
   if (expiresInDays && expiresInDays > 0) {
     payload.expires_in_days = expiresInDays
+  }
+  const trimmedCategory = category?.trim()
+  if (trimmedCategory) {
+    payload.category = trimmedCategory
   }
 
   const { data } = await apiClient.post<RedeemCode[]>('/admin/redeem-codes/generate', payload)
@@ -181,6 +188,8 @@ export async function exportCodes(filters?: {
   type?: RedeemCodeType
   status?: 'used' | 'expired' | 'unused' | 'disabled'
   search?: string
+  category?: string
+  value?: string
   sort_by?: string
   sort_order?: 'asc' | 'desc'
 }): Promise<Blob> {

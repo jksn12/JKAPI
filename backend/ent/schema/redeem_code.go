@@ -59,6 +59,9 @@ func (RedeemCode) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			SchemaType(map[string]string{dialect.Postgres: "text"}),
+		field.String("category").
+			MaxLen(255).
+			Default(""),
 		field.Time("created_at").
 			Immutable().
 			Default(time.Now).

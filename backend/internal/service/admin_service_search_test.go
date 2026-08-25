@@ -125,22 +125,26 @@ func (s *proxyRepoStubForAdminList) ListWithFiltersAndAccountCount(_ context.Con
 type redeemRepoStubForAdminList struct {
 	redeemRepoStub
 
-	listWithFiltersCalls  int
-	listWithFiltersParams pagination.PaginationParams
-	listWithFiltersType   string
-	listWithFiltersStatus string
-	listWithFiltersSearch string
-	listWithFiltersCodes  []RedeemCode
-	listWithFiltersResult *pagination.PaginationResult
-	listWithFiltersErr    error
+	listWithFiltersCalls    int
+	listWithFiltersParams   pagination.PaginationParams
+	listWithFiltersType     string
+	listWithFiltersStatus   string
+	listWithFiltersSearch   string
+	listWithFiltersCategory string
+	listWithFiltersValue    string
+	listWithFiltersCodes    []RedeemCode
+	listWithFiltersResult   *pagination.PaginationResult
+	listWithFiltersErr      error
 }
 
-func (s *redeemRepoStubForAdminList) ListWithFilters(_ context.Context, params pagination.PaginationParams, codeType, status, search string) ([]RedeemCode, *pagination.PaginationResult, error) {
+func (s *redeemRepoStubForAdminList) ListWithFilters(_ context.Context, params pagination.PaginationParams, codeType, status, search, category, value string) ([]RedeemCode, *pagination.PaginationResult, error) {
 	s.listWithFiltersCalls++
 	s.listWithFiltersParams = params
 	s.listWithFiltersType = codeType
 	s.listWithFiltersStatus = status
 	s.listWithFiltersSearch = search
+	s.listWithFiltersCategory = category
+	s.listWithFiltersValue = value
 
 	if s.listWithFiltersErr != nil {
 		return nil, nil, s.listWithFiltersErr
@@ -254,7 +258,7 @@ func TestAdminService_ListRedeemCodes_WithSearch(t *testing.T) {
 		}
 		svc := &adminServiceImpl{redeemCodeRepo: repo}
 
-		codes, total, err := svc.ListRedeemCodes(context.Background(), 1, 20, RedeemTypeBalance, StatusUnused, "ABC", "value", "ASC")
+		codes, total, err := svc.ListRedeemCodes(context.Background(), 1, 20, RedeemTypeBalance, StatusUnused, "ABC", "云猫充值 10元", "10", "value", "ASC")
 		require.NoError(t, err)
 		require.Equal(t, int64(3), total)
 		require.Equal(t, []RedeemCode{{ID: 4, Code: "ABC"}}, codes)
@@ -264,5 +268,7 @@ func TestAdminService_ListRedeemCodes_WithSearch(t *testing.T) {
 		require.Equal(t, RedeemTypeBalance, repo.listWithFiltersType)
 		require.Equal(t, StatusUnused, repo.listWithFiltersStatus)
 		require.Equal(t, "ABC", repo.listWithFiltersSearch)
+		require.Equal(t, "云猫充值 10元", repo.listWithFiltersCategory)
+		require.Equal(t, "10", repo.listWithFiltersValue)
 	})
 }

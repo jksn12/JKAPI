@@ -23,7 +23,7 @@ func TestRedeemExportPassesSearchAndSort(t *testing.T) {
 	router, adminSvc := setupRedeemExportRouter()
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/redeem-codes/export?type=balance&status=unused&search=ABC&sort_by=value&sort_order=asc", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/admin/redeem-codes/export?type=balance&status=unused&search=ABC&category=%E4%BA%91%E7%8C%AB%E5%85%85%E5%80%BC%2010%E5%85%83&value=10&sort_by=value&sort_order=asc", nil)
 	router.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
 
@@ -31,6 +31,8 @@ func TestRedeemExportPassesSearchAndSort(t *testing.T) {
 	require.Equal(t, "balance", adminSvc.lastListRedeemCodes.codeType)
 	require.Equal(t, "unused", adminSvc.lastListRedeemCodes.status)
 	require.Equal(t, "ABC", adminSvc.lastListRedeemCodes.search)
+	require.Equal(t, "云猫充值 10元", adminSvc.lastListRedeemCodes.category)
+	require.Equal(t, "10", adminSvc.lastListRedeemCodes.value)
 	require.Equal(t, "value", adminSvc.lastListRedeemCodes.sortBy)
 	require.Equal(t, "asc", adminSvc.lastListRedeemCodes.sortOrder)
 }

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,6 +30,7 @@ func (r *redeemCodeRepository) Create(ctx context.Context, code *service.RedeemC
 		SetValue(code.Value).
 		SetStatus(code.Status).
 		SetNotes(code.Notes).
+		SetCategory(code.Category).
 		SetValidityDays(code.ValidityDays).
 		SetNillableExpiresAt(code.ExpiresAt).
 		SetNillableUsedBy(code.UsedBy).
@@ -56,6 +58,7 @@ func (r *redeemCodeRepository) CreateBatch(ctx context.Context, codes []service.
 			SetValue(c.Value).
 			SetStatus(c.Status).
 			SetNotes(c.Notes).
+			SetCategory(c.Category).
 			SetValidityDays(c.ValidityDays).
 			SetNillableExpiresAt(c.ExpiresAt).
 			SetNillableUsedBy(c.UsedBy).
@@ -99,10 +102,10 @@ func (r *redeemCodeRepository) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *redeemCodeRepository) List(ctx context.Context, params pagination.PaginationParams) ([]service.RedeemCode, *pagination.PaginationResult, error) {
-	return r.ListWithFilters(ctx, params, "", "", "")
+	return r.ListWithFilters(ctx, params, "", "", "", "", "")
 }
 
-func (r *redeemCodeRepository) ListWithFilters(ctx context.Context, params pagination.PaginationParams, codeType, status, search string) ([]service.RedeemCode, *pagination.PaginationResult, error) {
+func (r *redeemCodeRepository) ListWithFilters(ctx context.Context, params pagination.PaginationParams, codeType, status, search, category, value string) ([]service.RedeemCode, *pagination.PaginationResult, error) {
 	q := r.client.RedeemCode.Query()
 
 	if codeType != "" {
@@ -132,10 +135,21 @@ func (r *redeemCodeRepository) ListWithFilters(ctx context.Context, params pagin
 			q = q.Where(redeemcode.StatusEQ(status))
 		}
 	}
+	if category != "" {
+		q = q.Where(redeemcode.CategoryEQ(category))
+	}
+	if value != "" {
+		parsedValue, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return nil, nil, err
+		}
+		q = q.Where(redeemcode.ValueEQ(parsedValue))
+	}
 	if search != "" {
 		q = q.Where(
 			redeemcode.Or(
 				redeemcode.CodeContainsFold(search),
+				redeemcode.CategoryContainsFold(search),
 				redeemcode.HasUserWith(user.EmailContainsFold(search)),
 			),
 		)
@@ -177,6 +191,8 @@ func redeemCodeListOrder(params pagination.PaginationParams) []func(*entsql.Sele
 		field = redeemcode.FieldValue
 	case "status":
 		field = redeemcode.FieldStatus
+	case "category":
+		field = redeemcode.FieldCategory
 	case "used_at":
 		field = redeemcode.FieldUsedAt
 	case "created_at":
@@ -202,6 +218,7 @@ func (r *redeemCodeRepository) Update(ctx context.Context, code *service.RedeemC
 		SetValue(code.Value).
 		SetStatus(code.Status).
 		SetNotes(code.Notes).
+		SetCategory(code.Category).
 		SetValidityDays(code.ValidityDays)
 
 	if code.UsedBy != nil {
@@ -295,6 +312,9 @@ func (r *redeemCodeRepository) batchUpdate(ctx context.Context, client *dbent.Cl
 	}
 	if fields.Notes != nil {
 		up.SetNotes(*fields.Notes)
+	}
+	if fields.Category != nil {
+		up.SetCategory(*fields.Category)
 	}
 	if fields.ExpiresAt.Set {
 		if fields.ExpiresAt.Value != nil {
@@ -421,6 +441,7 @@ func redeemCodeEntityToService(m *dbent.RedeemCode) *service.RedeemCode {
 		UsedBy:       m.UsedBy,
 		UsedAt:       m.UsedAt,
 		Notes:        derefString(m.Notes),
+		Category:     m.Category,
 		CreatedAt:    m.CreatedAt,
 		ExpiresAt:    m.ExpiresAt,
 		GroupID:      m.GroupID,

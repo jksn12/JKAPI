@@ -114,6 +114,20 @@ func (_c *RedeemCodeCreate) SetNillableNotes(v *string) *RedeemCodeCreate {
 	return _c
 }
 
+// SetCategory sets the "category" field.
+func (_c *RedeemCodeCreate) SetCategory(v string) *RedeemCodeCreate {
+	_c.mutation.SetCategory(v)
+	return _c
+}
+
+// SetNillableCategory sets the "category" field if the given value is not nil.
+func (_c *RedeemCodeCreate) SetNillableCategory(v *string) *RedeemCodeCreate {
+	if v != nil {
+		_c.SetCategory(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *RedeemCodeCreate) SetCreatedAt(v time.Time) *RedeemCodeCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -241,6 +255,10 @@ func (_c *RedeemCodeCreate) defaults() {
 		v := redeemcode.DefaultStatus
 		_c.mutation.SetStatus(v)
 	}
+	if _, ok := _c.mutation.Category(); !ok {
+		v := redeemcode.DefaultCategory
+		_c.mutation.SetCategory(v)
+	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := redeemcode.DefaultCreatedAt()
 		_c.mutation.SetCreatedAt(v)
@@ -278,6 +296,14 @@ func (_c *RedeemCodeCreate) check() error {
 	if v, ok := _c.mutation.Status(); ok {
 		if err := redeemcode.StatusValidator(v); err != nil {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "RedeemCode.status": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.Category(); !ok {
+		return &ValidationError{Name: "category", err: errors.New(`ent: missing required field "RedeemCode.category"`)}
+	}
+	if v, ok := _c.mutation.Category(); ok {
+		if err := redeemcode.CategoryValidator(v); err != nil {
+			return &ValidationError{Name: "category", err: fmt.Errorf(`ent: validator failed for field "RedeemCode.category": %w`, err)}
 		}
 	}
 	if _, ok := _c.mutation.CreatedAt(); !ok {
@@ -336,6 +362,10 @@ func (_c *RedeemCodeCreate) createSpec() (*RedeemCode, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Notes(); ok {
 		_spec.SetField(redeemcode.FieldNotes, field.TypeString, value)
 		_node.Notes = &value
+	}
+	if value, ok := _c.mutation.Category(); ok {
+		_spec.SetField(redeemcode.FieldCategory, field.TypeString, value)
+		_node.Category = value
 	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(redeemcode.FieldCreatedAt, field.TypeTime, value)
@@ -540,6 +570,18 @@ func (u *RedeemCodeUpsert) UpdateNotes() *RedeemCodeUpsert {
 // ClearNotes clears the value of the "notes" field.
 func (u *RedeemCodeUpsert) ClearNotes() *RedeemCodeUpsert {
 	u.SetNull(redeemcode.FieldNotes)
+	return u
+}
+
+// SetCategory sets the "category" field.
+func (u *RedeemCodeUpsert) SetCategory(v string) *RedeemCodeUpsert {
+	u.Set(redeemcode.FieldCategory, v)
+	return u
+}
+
+// UpdateCategory sets the "category" field to the value that was provided on create.
+func (u *RedeemCodeUpsert) UpdateCategory() *RedeemCodeUpsert {
+	u.SetExcluded(redeemcode.FieldCategory)
 	return u
 }
 
@@ -765,6 +807,20 @@ func (u *RedeemCodeUpsertOne) UpdateNotes() *RedeemCodeUpsertOne {
 func (u *RedeemCodeUpsertOne) ClearNotes() *RedeemCodeUpsertOne {
 	return u.Update(func(s *RedeemCodeUpsert) {
 		s.ClearNotes()
+	})
+}
+
+// SetCategory sets the "category" field.
+func (u *RedeemCodeUpsertOne) SetCategory(v string) *RedeemCodeUpsertOne {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.SetCategory(v)
+	})
+}
+
+// UpdateCategory sets the "category" field to the value that was provided on create.
+func (u *RedeemCodeUpsertOne) UpdateCategory() *RedeemCodeUpsertOne {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.UpdateCategory()
 	})
 }
 
@@ -1165,6 +1221,20 @@ func (u *RedeemCodeUpsertBulk) UpdateNotes() *RedeemCodeUpsertBulk {
 func (u *RedeemCodeUpsertBulk) ClearNotes() *RedeemCodeUpsertBulk {
 	return u.Update(func(s *RedeemCodeUpsert) {
 		s.ClearNotes()
+	})
+}
+
+// SetCategory sets the "category" field.
+func (u *RedeemCodeUpsertBulk) SetCategory(v string) *RedeemCodeUpsertBulk {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.SetCategory(v)
+	})
+}
+
+// UpdateCategory sets the "category" field to the value that was provided on create.
+func (u *RedeemCodeUpsertBulk) UpdateCategory() *RedeemCodeUpsertBulk {
+	return u.Update(func(s *RedeemCodeUpsert) {
+		s.UpdateCategory()
 	})
 }
 

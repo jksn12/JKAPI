@@ -595,6 +595,7 @@ func redeemCodeFromServiceBase(rc *service.RedeemCode) RedeemCode {
 		Status:       rc.Status,
 		UsedBy:       rc.UsedBy,
 		UsedAt:       rc.UsedAt,
+		Category:     rc.Category,
 		CreatedAt:    rc.CreatedAt,
 		ExpiresAt:    rc.ExpiresAt,
 		GroupID:      rc.GroupID,
