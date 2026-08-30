@@ -123,7 +123,7 @@
               </div>
 
               <div class="grid gap-4 xl:grid-cols-4">
-                <div class="card flex min-h-[260px] flex-col p-5">
+                <div v-if="balanceMethodOptions.length > 0" class="card flex min-h-[260px] flex-col p-5">
                   <span class="w-fit rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-bold uppercase text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200">Alipay checkout</span>
                   <h3 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">支付宝支付</h3>
                   <p class="mt-3 text-sm leading-6 text-gray-500 dark:text-gray-400">输入充值金额后发起支付宝订单，支付完成后余额会自动到账。</p>
@@ -136,7 +136,7 @@
                       min="1"
                       step="0.01"
                       class="input w-full"
-                      :placeholder="t('payment.amountPlaceholder')"
+                      placeholder="请输入充值金额"
                     />
                   </div>
 
@@ -643,24 +643,7 @@ const checkout = ref<CheckoutInfoResponse>({
 
 const showAffiliateSection = computed(() => appStore.cachedPublicSettings?.affiliate_enabled !== false)
 
-const visibleMethods = computed(() => {
-  const methods = getVisibleMethods(checkout.value.methods)
-  if (Object.keys(methods).length > 0) return methods
-
-  return {
-    alipay: {
-      currency: DEFAULT_PAYMENT_CURRENCY,
-      display_name: '支付宝',
-      daily_limit: 0,
-      daily_used: 0,
-      daily_remaining: 0,
-      single_min: 0,
-      single_max: 0,
-      fee_rate: checkout.value.recharge_fee_rate ?? 0,
-      available: true,
-    },
-  }
-})
+const visibleMethods = computed(() => getVisibleMethods(checkout.value.methods))
 const enabledMethods = computed(() => Object.keys(visibleMethods.value))
 const validAmount = computed(() => amount.value ?? 0)
 // 订阅 CNY 换算汇率（1 USD = X CNY）。0 = 未配置，订阅保持 price 直付（与后端 opt-in 条件严格镜像）。
