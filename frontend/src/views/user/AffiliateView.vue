@@ -1,5 +1,5 @@
 <template>
-  <AppLayout>
+  <component :is="embedded ? 'div' : AppLayout">
     <div class="space-y-6">
       <div v-if="loading" class="flex justify-center py-12">
         <div
@@ -136,7 +136,7 @@
         </div>
       </template>
     </div>
-  </AppLayout>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -151,6 +151,10 @@ import { useAuthStore } from '@/stores/auth'
 import { useClipboard } from '@/composables/useClipboard'
 import { formatCurrency, formatDateTime } from '@/utils/format'
 import { extractApiErrorMessage } from '@/utils/apiError'
+
+withDefaults(defineProps<{ embedded?: boolean }>(), {
+  embedded: false,
+})
 
 const { t } = useI18n()
 const appStore = useAppStore()

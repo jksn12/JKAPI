@@ -279,7 +279,7 @@ export const CN_BASE_URL_PRESETS: Record<'kimi' | 'zhipu' | 'deepseek', CnBaseUr
     { mode: 'payg', protocol: 'chat_completions', label: 'DeepSeek', url: 'https://api.deepseek.com' },
     { mode: 'payg', protocol: 'anthropic', label: 'DeepSeek Anthropic', url: 'https://api.deepseek.com/anthropic' },
     { mode: 'payg', protocol: 'responses', label: 'DeepSeek Responses', url: 'https://api.deepseek.com' }
-  ]
+  ],
 }
 
 /** 返回指定供应商 + 账号类型 + API 协议的默认 base url。 */
@@ -294,10 +294,10 @@ export function defaultCNBaseUrl(
         return mode === 'coding' ? 'https://api.kimi.com/coding' : 'https://api.moonshot.cn/anthropic'
       case 'zhipu':
         return 'https://open.bigmodel.cn/api/anthropic'
-      case 'deepseek':
-        return 'https://api.deepseek.com/anthropic'
-      default:
-        return ''
+    case 'deepseek':
+      return 'https://api.deepseek.com/anthropic'
+    default:
+      return ''
     }
   }
   // responses 仅 deepseek：base 与 chat_completions 相同（端点路径差异由后端处理）。

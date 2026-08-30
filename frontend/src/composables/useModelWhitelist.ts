@@ -115,7 +115,6 @@ const deepseekModels = [
   'deepseek-r1-distill-qwen-32b', 'deepseek-r1-distill-qwen-14b', 'deepseek-r1-distill-qwen-7b',
   'deepseek-r1-distill-llama-70b', 'deepseek-r1-distill-llama-8b'
 ]
-
 // Mistral
 const mistralModels = [
   'mistral-small-latest', 'mistral-medium-latest', 'mistral-large-latest',

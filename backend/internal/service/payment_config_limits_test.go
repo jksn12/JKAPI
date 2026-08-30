@@ -198,6 +198,29 @@ func TestPcGroupByPaymentType(t *testing.T) {
 			t.Fatalf("stripe with empty types should still be in stripe group, got %v", groups)
 		}
 	})
+
+	t.Run("official providers with no supported types use provider defaults", func(t *testing.T) {
+		t.Parallel()
+		alipay := makeInstance(1, payment.TypeAlipay, "", "")
+		wxpay := makeInstance(2, payment.TypeWxpay, "", "")
+		airwallex := makeInstance(3, payment.TypeAirwallex, "", "")
+		easypay := makeInstance(4, payment.TypeEasyPay, "", "")
+
+		groups := pcGroupByPaymentType([]*dbent.PaymentProviderInstance{alipay, wxpay, airwallex, easypay})
+
+		if len(groups[payment.TypeAlipay]) != 1 || groups[payment.TypeAlipay][0].ID != 1 {
+			t.Fatalf("alipay group should contain official alipay default instance, got %v", groups[payment.TypeAlipay])
+		}
+		if len(groups[payment.TypeWxpay]) != 1 || groups[payment.TypeWxpay][0].ID != 2 {
+			t.Fatalf("wxpay group should contain official wxpay default instance, got %v", groups[payment.TypeWxpay])
+		}
+		if len(groups[payment.TypeAirwallex]) != 1 || groups[payment.TypeAirwallex][0].ID != 3 {
+			t.Fatalf("airwallex group should contain airwallex default instance, got %v", groups[payment.TypeAirwallex])
+		}
+		if len(groups[payment.TypeEasyPay]) != 0 {
+			t.Fatalf("easypay with empty supported types should not create a visible method, got %v", groups[payment.TypeEasyPay])
+		}
+	})
 }
 
 func TestPcAggregateMethodCurrency(t *testing.T) {

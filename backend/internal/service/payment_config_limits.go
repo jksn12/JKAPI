@@ -235,6 +235,17 @@ func pcGroupByPaymentType(instances []*dbent.PaymentProviderInstance) map[string
 			add(payment.TypeStripe, inst)
 			continue
 		}
+		if strings.TrimSpace(inst.SupportedTypes) == "" {
+			switch inst.ProviderKey {
+			case payment.TypeAlipay:
+				add(payment.TypeAlipay, inst)
+			case payment.TypeWxpay:
+				add(payment.TypeWxpay, inst)
+			case payment.TypeAirwallex:
+				add(payment.TypeAirwallex, inst)
+			}
+			continue
+		}
 		for _, t := range splitTypes(inst.SupportedTypes) {
 			add(t, inst)
 		}

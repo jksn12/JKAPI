@@ -229,6 +229,34 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/canvas',
+    component: () => import('@/views/user/canvas/CanvasSuiteLayout.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'JKAI Canvas',
+      titleKey: 'nav.canvas'
+    },
+    children: [
+      { path: '', name: 'CanvasLaunch', component: () => import('@/views/user/canvas/CanvasLaunchView.vue') },
+      { path: 'image', name: 'CanvasImage', component: () => import('@/views/user/canvas/CanvasImageWorkbench.vue') },
+      { path: 'library', name: 'CanvasLibrary', component: () => import('@/views/user/canvas/CanvasLibraryView.vue') },
+      { path: 'prompts', name: 'CanvasPrompts', component: () => import('@/views/user/canvas/CanvasPromptsView.vue') },
+      { path: 'assets', name: 'CanvasAssets', component: () => import('@/views/user/canvas/CanvasAssetsView.vue') }
+    ]
+  },
+  {
+    path: '/canvas/editor',
+    name: 'CanvasEditor',
+    component: () => import('@/views/user/CanvasView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'JKAI Canvas',
+      titleKey: 'nav.canvas'
+    }
+  },
+  {
     path: '/usage',
     name: 'Usage',
     component: () => import('@/views/user/UsageView.vue'),
@@ -243,7 +271,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/redeem',
     name: 'Redeem',
-    component: () => import('@/views/user/RedeemView.vue'),
+    redirect: '/purchase?tab=redeem',
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -255,12 +283,12 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/affiliate',
     name: 'Affiliate',
-    component: () => import('@/views/user/AffiliateView.vue'),
+    redirect: '/purchase?tab=affiliate',
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
       title: 'Affiliate',
-      titleKey: 'affiliate.title',
+      titleKey: 'nav.buySubscription',
       descriptionKey: 'affiliate.description'
     }
   },
