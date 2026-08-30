@@ -340,13 +340,6 @@ func buildChatMessagesFromItems(messages []ChatMessage, rawItems []json.RawMessa
 		return lastTurnReasoning
 	}
 
-	reasoningForAssistant := func() string {
-		if pendingReasoning != "" {
-			return pendingReasoning
-		}
-		return lastTurnReasoning
-	}
-
 	for _, raw := range rawItems {
 		raw = bytesTrimSpace(raw)
 		if len(raw) == 0 || string(raw) == "null" {
