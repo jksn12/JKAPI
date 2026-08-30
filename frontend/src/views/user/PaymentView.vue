@@ -644,7 +644,11 @@ const checkout = ref<CheckoutInfoResponse>({
 const showAffiliateSection = computed(() => appStore.cachedPublicSettings?.affiliate_enabled !== false)
 
 const visibleMethods = computed(() => getVisibleMethods(checkout.value.methods))
-const enabledMethods = computed(() => Object.keys(visibleMethods.value))
+const enabledMethods = computed(() =>
+  Object.entries(visibleMethods.value)
+    .filter(([, limit]) => limit.available !== false)
+    .map(([type]) => type),
+)
 const validAmount = computed(() => amount.value ?? 0)
 // 订阅 CNY 换算汇率（1 USD = X CNY）。0 = 未配置，订阅保持 price 直付（与后端 opt-in 条件严格镜像）。
 const subscriptionUsdToCnyRate = computed(() => {
