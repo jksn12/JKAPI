@@ -10,10 +10,6 @@ import (
 	"github.com/jksn12/JKAPI/internal/pkg/xai"
 )
 
-// grokUpstreamUserAgent is kept for compatibility with older Grok request
-// tests. Current requests use the pinned default UA from this package.
-const grokUpstreamUserAgent = "jkapi-grok/1.0"
-
 // Fixed CLI identity aliases — single source of truth is internal/pkg/xai.
 const (
 	grokClientVersionHeader    = xai.CLIStableVersion

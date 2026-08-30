@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jksn12/JKAPI/internal/config"
 	"github.com/jksn12/JKAPI/internal/handler"
 	servermiddleware "github.com/jksn12/JKAPI/internal/server/middleware"
 	"github.com/jksn12/JKAPI/internal/service"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
 
@@ -343,6 +343,18 @@ func TestGatewayRoutesNonGrokVideosAreRejectedAtPlatformGate(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, w.Code, "method=%s path=%s", tc.method, tc.path)
 		require.Contains(t, w.Body.String(), "Videos API is not supported for this platform")
 	}
+}
+
+func TestGatewayRoutesCompositeVideoGenerationAllowed(t *testing.T) {
+	router := newGatewayRoutesTestRouter(service.PlatformComposite)
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/videos/generations", strings.NewReader(`{"model":"grok-imagine-video-1.5","prompt":"waves"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+	require.NotEqual(t, http.StatusNotFound, w.Code)
+	require.NotContains(t, w.Body.String(), "not supported")
 }
 
 func TestGatewayRoutesCompositeOpenAIOnlyEndpointsRequireOpenAITarget(t *testing.T) {

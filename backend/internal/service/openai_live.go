@@ -15,9 +15,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jksn12/JKAPI/internal/pkg/logger"
 	coderws "github.com/coder/websocket"
 	"github.com/google/uuid"
+	"github.com/jksn12/JKAPI/internal/pkg/logger"
 	"github.com/tidwall/gjson"
 	"go.uber.org/zap"
 )
@@ -304,7 +304,7 @@ func (s *OpenAIGatewayService) createUpstreamLiveCall(
 	upstreamReq.Header.Set(liveAttestationHeader, attestation)
 	applyLiveUpstreamIdentityHeaders(upstreamReq.Header)
 
-	resp, err := s.httpUpstream.Do(upstreamReq, resolveAccountProxyURL(account), account.ID, account.Concurrency)
+	resp, err := s.doOpenAIUpstream(upstreamReq, resolveAccountProxyURL(account), account)
 	if err != nil {
 		logLiveCreateStageFailure(ctx, account.ID, "upstream_transport", err)
 		return nil, err

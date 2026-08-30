@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/jksn12/JKAPI/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/jksn12/JKAPI/internal/service"
 	"github.com/stretchr/testify/require"
 )
 
@@ -182,6 +182,16 @@ func TestGetUpstreamEndpointPrefersRuntimeOverride(t *testing.T) {
 
 	setActualUpstreamEndpoint(c, "")
 	require.Equal(t, EndpointMessages, GetUpstreamEndpoint(c, service.PlatformAntigravity))
+}
+
+func TestGetUpstreamEndpointUsesOpenAIRuntimeOverride(t *testing.T) {
+	recorder := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(recorder)
+	c.Request = httptest.NewRequest(http.MethodPost, EndpointResponses, nil)
+	c.Set(ctxKeyInboundEndpoint, EndpointResponses)
+
+	service.SetActualOpenAIUpstreamEndpoint(c, EndpointChatCompletions)
+	require.Equal(t, EndpointChatCompletions, GetUpstreamEndpoint(c, service.PlatformOpenAI))
 }
 
 func TestResolveOpenAIUpstreamEndpointPrefersForwardResult(t *testing.T) {

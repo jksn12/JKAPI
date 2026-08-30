@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jksn12/JKAPI/internal/pkg/antigravity"
 	"github.com/jksn12/JKAPI/internal/pkg/apicompat"
-	"github.com/gin-gonic/gin"
 )
 
 type antigravityCompatProtocol uint8
@@ -28,6 +28,8 @@ const (
 	// AntigravityCredentialRejectedReason 标识上游拒绝已刷新 OAuth 凭据。
 	AntigravityCredentialRejectedReason GatewayFailureReason = "antigravity_oauth_credential_rejected"
 )
+
+const antigravityCompatMaxTokens = 64000
 
 type antigravityCompatRequest struct {
 	protocol        antigravityCompatProtocol
@@ -158,7 +160,7 @@ func preserveChatCompletionTokenLimit(request *apicompat.ChatCompletionsRequest,
 		limit = request.MaxCompletionTokens
 	}
 	if limit != nil && *limit > 0 {
-		claudeRequest.MaxTokens = *limit
+		claudeRequest.MaxTokens = min(*limit, antigravityCompatMaxTokens)
 	}
 }
 

@@ -19,10 +19,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
 	"github.com/jksn12/JKAPI/internal/pkg/logger"
 	"github.com/jksn12/JKAPI/internal/pkg/tlsfingerprint"
-	"github.com/google/uuid"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
 )
@@ -126,6 +126,35 @@ type UpstreamBillingProbeResult struct {
 	AccountID int64                         `json:"account_id"`
 	Snapshot  *UpstreamBillingProbeSnapshot `json:"snapshot,omitempty"`
 	Error     string                        `json:"error,omitempty"`
+}
+
+// UpstreamBillingRateSnapshotItem is the compact representation used by the
+// account table's background refresh. It intentionally excludes credentials,
+// runtime counters, and usage data from the response.
+type UpstreamBillingRateSnapshotItem struct {
+	AccountID int64                         `json:"account_id"`
+	Snapshot  *UpstreamBillingProbeSnapshot `json:"snapshot"`
+}
+
+// BuildUpstreamBillingRateSnapshotItems projects account rows into the
+// read-only payload used by the rate refresh endpoint. Decode snapshots here
+// so malformed or legacy extra data is handled consistently with probe logic.
+func BuildUpstreamBillingRateSnapshotItems(accounts []Account) []UpstreamBillingRateSnapshotItem {
+	items := make([]UpstreamBillingRateSnapshotItem, 0, len(accounts))
+	for _, account := range accounts {
+		var snapshot *UpstreamBillingProbeSnapshot
+		// The billing endpoint is supported by every API-key platform; limiting
+		// this projection to OpenAI would make the background refresh erase the
+		// other platforms' persisted snapshots from the table.
+		if account.Type == AccountTypeAPIKey {
+			snapshot = decodeUpstreamBillingProbeSnapshot(account.Extra)
+		}
+		items = append(items, UpstreamBillingRateSnapshotItem{
+			AccountID: account.ID,
+			Snapshot:  snapshot,
+		})
+	}
+	return items
 }
 
 type upstreamBillingProbeResponse struct {
@@ -597,6 +626,9 @@ func (s *UpstreamBillingProbeService) probeLoadedAccount(ctx context.Context, ac
 		return s.persistProbeFailure(ctx, account, intervalMinutes, now, 0, "missing_api_key", 0)
 	}
 	baseURL := account.GetCredential("base_url")
+	if account.IsCNProvider() && account.IsAdaptiveAPIProtocol() {
+		baseURL = account.GetCNProtocolBaseURL(APIProtocolChatCompletions)
+	}
 	if account.Platform == PlatformOpenAI {
 		if baseURL == "" {
 			// 保持官方语义：OpenAI 账号无自定义 base 时探官方域（404 → unsupported）。

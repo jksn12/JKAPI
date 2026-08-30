@@ -6,10 +6,10 @@ import (
 	"errors"
 
 	entsql "entgo.io/ent/dialect/sql"
+	"github.com/google/wire"
 	"github.com/jksn12/JKAPI/ent"
 	"github.com/jksn12/JKAPI/internal/config"
 	"github.com/jksn12/JKAPI/internal/service"
-	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -96,6 +96,7 @@ var ProviderSet = wire.NewSet(
 	NewUserGroupRateRepository,
 	NewErrorPassthroughRepository,
 	NewTLSFingerprintProfileRepository,
+	NewPluginRepository,
 	NewChannelRepository,
 	NewChannelMonitorRepository,
 	NewChannelMonitorV2Repository,

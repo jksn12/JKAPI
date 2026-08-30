@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jksn12/JKAPI/internal/config"
+	"github.com/jksn12/JKAPI/internal/util/responseheaders"
 	"github.com/stretchr/testify/require"
 )
 
@@ -247,6 +249,19 @@ func TestWriteOpenAIPassthroughResponseHeaders_RelaysAndClearsTurnState(t *testi
 	// 上游缺失时清除残留（failover 换号防串扰）
 	writeOpenAIPassthroughResponseHeaders(dst, http.Header{"Content-Type": []string{"application/json"}}, nil)
 	require.Empty(t, dst.Get("X-Codex-Turn-State"))
+}
+
+func TestWriteOpenAIPassthroughResponseHeaders_RelaysReasoningIncluded(t *testing.T) {
+	dst := http.Header{}
+	src := http.Header{}
+	src.Set("X-Reasoning-Included", "1")
+
+	writeOpenAIPassthroughResponseHeaders(
+		dst,
+		src,
+		responseheaders.CompileHeaderFilter(config.ResponseHeaderConfig{}),
+	)
+	require.Equal(t, "1", dst.Get("X-Reasoning-Included"))
 }
 
 func TestEnsureOpenAIRemoteCompactionV2BetaFeature(t *testing.T) {
