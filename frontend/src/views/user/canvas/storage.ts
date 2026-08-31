@@ -53,12 +53,27 @@ function write<T>(key: string, value: T) {
   localStorage.setItem(key, JSON.stringify(value))
 }
 
+const LEGACY_CANVAS_TITLE_PREFIX = '\u65e0\u9650\u753b\u5e03'
+
+function normalizeCanvasTitle(title: string) {
+  return title.startsWith(LEGACY_CANVAS_TITLE_PREFIX)
+    ? `画布${title.slice(LEGACY_CANVAS_TITLE_PREFIX.length)}`
+    : title
+}
+
+function normalizeCanvasRecords(records: CanvasRecord[]) {
+  return records.map((record) => ({
+    ...record,
+    title: normalizeCanvasTitle(record.title),
+  }))
+}
+
 export const canvasStorage = {
   assets: () => read<LibraryAsset[]>(ASSETS_KEY, []),
   saveAssets: (value: LibraryAsset[]) => write(ASSETS_KEY, value),
   prompts: () => read<PromptItem[]>(PROMPTS_KEY, []),
   savePrompts: (value: PromptItem[]) => write(PROMPTS_KEY, value),
-  canvases: () => read<CanvasRecord[]>(CANVASES_KEY, []),
+  canvases: () => normalizeCanvasRecords(read<CanvasRecord[]>(CANVASES_KEY, [])),
   saveCanvases: (value: CanvasRecord[]) => write(CANVASES_KEY, value),
   activeCanvasId: () => localStorage.getItem(ACTIVE_CANVAS_KEY) || '',
   setActiveCanvasId: (id: string) => localStorage.setItem(ACTIVE_CANVAS_KEY, id),

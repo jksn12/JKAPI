@@ -2554,7 +2554,7 @@ function ensureActiveCanvas() {
   const records = canvasStorage.canvases()
   const record: CanvasRecord = records[0] || {
     id: makeStorageId('canvas'),
-    title: '无限画布 1',
+    title: '画布 1',
     nodes: 0,
     edges: 0,
     updatedAt: new Date().toISOString(),
