@@ -607,8 +607,15 @@ export interface UpstreamModelMetadata {
  * @param id - Account ID
  * @returns List of model IDs returned by the upstream
  */
-export async function syncUpstreamModels(id: number): Promise<SyncUpstreamModelsResult> {
-  const { data } = await apiClient.post<SyncUpstreamModelsResult>(`/admin/accounts/${id}/models/sync-upstream`)
+export interface SyncUpstreamModelsParams {
+  models?: string[]
+}
+
+export async function syncUpstreamModels(
+  id: number,
+  params: SyncUpstreamModelsParams = {}
+): Promise<SyncUpstreamModelsResult> {
+  const { data } = await apiClient.post<SyncUpstreamModelsResult>(`/admin/accounts/${id}/models/sync-upstream`, params)
   return data
 }
 
@@ -618,6 +625,7 @@ export interface SyncUpstreamPreviewParams {
   base_url?: string
   api_key: string
   model_mapping?: Record<string, string>
+  models?: string[]
 }
 
 /**

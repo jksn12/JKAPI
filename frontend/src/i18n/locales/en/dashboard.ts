@@ -623,6 +623,8 @@ export default {
       model: 'Model',
       input: 'Input',
       output: 'Output',
+      imageInput: 'Image input',
+      imageOutput: 'Image output',
       cache: 'Cache',
       cacheWrite: 'Write',
       cacheRead: 'Read',

@@ -9,6 +9,8 @@ import (
 	"time"
 
 	dbent "github.com/jksn12/JKAPI/ent"
+	"github.com/jksn12/JKAPI/ent/channelmonitor"
+	"github.com/jksn12/JKAPI/ent/predicate"
 	"github.com/jksn12/JKAPI/internal/pkg/antigravity"
 	"github.com/jksn12/JKAPI/internal/pkg/claude"
 	infraerrors "github.com/jksn12/JKAPI/internal/pkg/errors"
@@ -642,6 +644,7 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	}
 
 	// 渠道缓存里存了 groupID → platform 的映射，改了平台要让它失效（见函数末尾）
+	previousName := group.Name
 	previousPlatform := group.Platform
 
 	if input.Name != "" {
@@ -898,6 +901,7 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	if err := s.groupRepo.Update(ctx, group); err != nil {
 		return nil, err
 	}
+	s.syncChannelMonitorGroupName(ctx, previousPlatform, previousName, group.Platform, group.Name)
 
 	if s.authCacheInvalidator != nil {
 		s.authCacheInvalidator.InvalidateAuthCacheByGroupID(ctx, id)
@@ -979,6 +983,63 @@ func (s *adminServiceImpl) UpdateGroup(ctx context.Context, id int64, input *Upd
 	}
 
 	return group, nil
+}
+
+func (s *adminServiceImpl) syncChannelMonitorGroupName(ctx context.Context, previousPlatform, previousName, platform, name string) {
+	if s.entClient == nil {
+		return
+	}
+	previousName = strings.TrimSpace(previousName)
+	name = strings.TrimSpace(name)
+	platform = strings.TrimSpace(platform)
+	if name == "" || platform == "" {
+		return
+	}
+
+	predicates := []predicate.ChannelMonitor{
+		channelmonitor.GroupNameEQ(previousName),
+		channelmonitor.GroupNameEQ(name),
+		channelmonitor.And(
+			channelmonitor.GroupNameEQ(""),
+			channelmonitor.NameEQ(previousName),
+		),
+		channelmonitor.And(
+			channelmonitor.GroupNameEQ(""),
+			channelmonitor.NameEQ(name),
+		),
+	}
+	if previousName == "" || previousName == name {
+		predicates = predicates[1:]
+	}
+
+	provider := channelmonitor.Provider(platform)
+	_, err := s.entClient.ChannelMonitor.Update().
+		Where(
+			channelmonitor.ProviderEQ(provider),
+			channelmonitor.Or(predicates...),
+		).
+		SetGroupName(name).
+		Save(ctx)
+	if err != nil {
+		logger.LegacyPrintf("service.admin", "sync channel monitor group name failed: platform=%s old=%q new=%q err=%v", platform, previousName, name, err)
+	}
+
+	// 如果分组平台刚修改过，也尽量把旧平台下同名遗留监控迁到新的 group_name；
+	// 不改 provider，避免把真实探测协议改错，只补展示/匹配用的分组名。
+	previousPlatform = strings.TrimSpace(previousPlatform)
+	if previousPlatform == "" || previousPlatform == platform {
+		return
+	}
+	_, err = s.entClient.ChannelMonitor.Update().
+		Where(
+			channelmonitor.ProviderEQ(channelmonitor.Provider(previousPlatform)),
+			channelmonitor.Or(predicates...),
+		).
+		SetGroupName(name).
+		Save(ctx)
+	if err != nil {
+		logger.LegacyPrintf("service.admin", "sync legacy channel monitor group name failed: platform=%s old=%q new=%q err=%v", previousPlatform, previousName, name, err)
+	}
 }
 
 func normalizeGroupModelPricing(platform string, pricing []ChannelModelPricing) ([]ChannelModelPricing, error) {

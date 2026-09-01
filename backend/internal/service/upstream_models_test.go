@@ -559,6 +559,232 @@ func TestSyncUpstreamModelCatalogUsesConfiguredModelsWhenListEndpointUnsupported
 	require.NotNil(t, repo.updates)
 }
 
+func TestSyncUpstreamModelCatalogUsesConfiguredModelsWhenAnthropicRouterReturnsEmptyList(t *testing.T) {
+	upstream := &httpUpstreamRecorder{responses: []*http.Response{
+		{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{"data":[]}`)),
+		},
+		{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{}`)),
+		},
+	}}
+	repo := &upstreamModelMetadataRepoStub{}
+	svc := &AccountTestService{accountRepo: repo, httpUpstream: upstream, cfg: upstreamModelSyncTestConfig()}
+
+	catalog, err := svc.SyncUpstreamModelCatalog(context.Background(), &Account{
+		ID: 106, Platform: PlatformAnthropic, Type: AccountTypeAPIKey,
+		Credentials: map[string]any{
+			"api_key":  "key",
+			"base_url": "https://aiwahaha.lol/",
+			"model_mapping": map[string]any{
+				"kimi-k2.5":      "kimi-k2.5",
+				"kimi-k2.6":      "kimi-k2.6",
+				"kimi-k2.7-code": "kimi-k2.7-code",
+				"kimi-k3":        "kimi-k3",
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Empty(t, catalog.Warnings)
+	require.Equal(t, []string{"kimi-k2.5", "kimi-k2.6", "kimi-k2.7-code", "kimi-k3"}, catalog.Models)
+	require.Len(t, catalog.Metadata, 4)
+	require.Equal(t, []string{"text"}, catalog.Metadata["kimi-k3"].InputModalities)
+	require.Equal(t, "high", catalog.Metadata["kimi-k3"].DefaultReasoningLevel)
+	require.True(t, *catalog.Metadata["kimi-k3"].Reasoning)
+	require.NotNil(t, repo.updates)
+}
+
+func TestSyncUpstreamModelCatalogFallsBackToGlobalRegistryAndConfiguredCodexMetadata(t *testing.T) {
+	upstream := &httpUpstreamRecorder{responses: []*http.Response{
+		{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body: io.NopCloser(strings.NewReader(`{"object":"list","data":[
+				{"id":"codex-auto-review","object":"model"},
+				{"id":"gpt-5.6-sol","object":"model"}
+			]}`)),
+		},
+		{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body: io.NopCloser(strings.NewReader(`{
+				"unrelated-router": {
+					"id": "unrelated-router",
+					"name": "Unrelated Router",
+					"api": "https://router.example/v1",
+					"models": {
+						"gpt-5.6-sol": {
+							"id": "gpt-5.6-sol",
+							"name": "GPT-5.6 Sol",
+							"reasoning": true,
+							"reasoning_options": [{"type":"effort","values":["low","medium","high","xhigh","max","ultra"]}],
+							"modalities": {"input":["text"],"output":["text"]},
+							"limit": {"context":1050000,"output":128000}
+						}
+					}
+				}
+			}`)),
+		},
+	}}
+	repo := &upstreamModelMetadataRepoStub{}
+	svc := &AccountTestService{accountRepo: repo, httpUpstream: upstream, cfg: upstreamModelSyncTestConfig()}
+
+	catalog, err := svc.SyncUpstreamModelCatalog(context.Background(), &Account{
+		ID: 102, Platform: PlatformOpenAI, Type: AccountTypeAPIKey,
+		Credentials: map[string]any{"api_key": "key", "base_url": "https://api.maoapi.org"},
+	})
+	require.NoError(t, err)
+	require.Empty(t, catalog.Warnings)
+	require.Len(t, upstream.requests, 2)
+	require.Contains(t, catalog.Metadata, "gpt-5.6-sol")
+	require.Contains(t, catalog.Metadata, "codex-auto-review")
+	require.Equal(t, int64(1_050_000), catalog.Metadata["gpt-5.6-sol"].ContextWindow)
+	require.Equal(t, []string{"none"}, catalog.Metadata["codex-auto-review"].SupportedReasoningLevels)
+	require.NotNil(t, repo.updates)
+}
+
+func TestSyncUpstreamModelCatalogUsesOpenAICompatFallbackForPreviewAndMediaModels(t *testing.T) {
+	upstream := &httpUpstreamRecorder{responses: []*http.Response{
+		{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body: io.NopCloser(strings.NewReader(`{"object":"list","data":[
+				{"id":"codex-auto-review","object":"model"},
+				{"id":"gpt-4o-audio-preview","object":"model"},
+				{"id":"gpt-4o-realtime-preview","object":"model"},
+				{"id":"gpt-5.2","object":"model"},
+				{"id":"gpt-5.2-2025-12-11","object":"model"},
+				{"id":"gpt-5.2-chat-latest","object":"model"},
+				{"id":"gpt-5.2-pro","object":"model"},
+				{"id":"gpt-5.2-pro-2025-12-11","object":"model"},
+				{"id":"gpt-5.3-codex-spark","object":"model"},
+				{"id":"gpt-5.4","object":"model"},
+				{"id":"gpt-5.4-2026-03-05","object":"model"},
+				{"id":"gpt-5.4-mini","object":"model"},
+				{"id":"gpt-5.5","object":"model"},
+				{"id":"gpt-5.6","object":"model"},
+				{"id":"gpt-5.6-sol","object":"model"},
+				{"id":"gpt-5.6-terra","object":"model"},
+				{"id":"gpt-image-1","object":"model"},
+				{"id":"gpt-image-1.5","object":"model"},
+				{"id":"gpt-image-2","object":"model"}
+			]}`)),
+		},
+		{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{}`)),
+		},
+	}}
+	repo := &upstreamModelMetadataRepoStub{}
+	svc := &AccountTestService{accountRepo: repo, httpUpstream: upstream, cfg: upstreamModelSyncTestConfig()}
+
+	catalog, err := svc.SyncUpstreamModelCatalog(context.Background(), &Account{
+		ID: 104, Platform: PlatformOpenAI, Type: AccountTypeAPIKey,
+		Credentials: map[string]any{"api_key": "key", "base_url": "https://x.ailzd.com/v1"},
+	})
+	require.NoError(t, err)
+	require.Empty(t, catalog.Warnings)
+	require.Len(t, catalog.Models, 19)
+	require.Len(t, catalog.Metadata, 19)
+	require.Equal(t, []string{"text"}, catalog.Metadata["gpt-4o-realtime-preview"].InputModalities)
+	require.Equal(t, []string{"text", "image"}, catalog.Metadata["gpt-image-2"].InputModalities)
+	require.NotNil(t, catalog.Metadata["gpt-5.2-2025-12-11"].Reasoning)
+	require.True(t, *catalog.Metadata["gpt-5.2-2025-12-11"].Reasoning)
+	require.NotNil(t, repo.updates)
+}
+
+func TestSyncUpstreamModelCatalogParsesGeminiCapabilityFields(t *testing.T) {
+	upstream := &httpUpstreamRecorder{resp: &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body: io.NopCloser(strings.NewReader(`{"models":[{
+			"name":"models/gemini-3.1-flash-lite",
+			"displayName":"Gemini 3.1 Flash Lite",
+			"description":"Fast Gemini model",
+			"inputTokenLimit":1048576,
+			"outputTokenLimit":65536,
+			"supportedGenerationMethods":["generateContent","countTokens"],
+			"thinking":{"enabled":true}
+		}]}`)),
+	}}
+	repo := &upstreamModelMetadataRepoStub{}
+	svc := &AccountTestService{accountRepo: repo, httpUpstream: upstream, cfg: upstreamModelSyncTestConfig()}
+
+	catalog, err := svc.SyncUpstreamModelCatalog(context.Background(), &Account{
+		ID: 103, Platform: PlatformGemini, Type: AccountTypeAPIKey,
+		Credentials: map[string]any{"api_key": "key", "base_url": "https://generativelanguage.googleapis.com"},
+	})
+	require.NoError(t, err)
+	require.Empty(t, catalog.Warnings)
+	require.Len(t, upstream.requests, 1)
+	metadata := catalog.Metadata["gemini-3.1-flash-lite"]
+	require.Equal(t, "Gemini 3.1 Flash Lite", metadata.DisplayName)
+	require.NotNil(t, metadata.Reasoning)
+	require.True(t, *metadata.Reasoning)
+	require.Equal(t, []string{"low", "medium", "high"}, metadata.SupportedReasoningLevels)
+	require.Equal(t, []string{"text"}, metadata.InputModalities)
+	require.Equal(t, int64(1_048_576), metadata.ContextWindow)
+	require.Equal(t, int64(65_536), metadata.MaxOutputTokens)
+	require.NotNil(t, repo.updates)
+}
+
+func TestSyncUpstreamModelCatalogUsesGeminiFamilyFallbackForRouterVariants(t *testing.T) {
+	upstream := &httpUpstreamRecorder{responses: []*http.Response{
+		{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body: io.NopCloser(strings.NewReader(`{"models":[
+				{"name":"models/gemini-2.5-flash"},
+				{"name":"models/gemini-2.5-flash-lite"},
+				{"name":"models/gemini-2.5-flash-nothinking"},
+				{"name":"models/gemini-2.5-flash-thinking"},
+				{"name":"models/gemini-2.5-pro"},
+				{"name":"models/gemini-3-flash"},
+				{"name":"models/gemini-3-flash-agent"},
+				{"name":"models/gemini-3-flash-preview"},
+				{"name":"models/gemini-3-pro"},
+				{"name":"models/gemini-3-pro-high"},
+				{"name":"models/gemini-3-pro-low"},
+				{"name":"models/gemini-3-pro-preview"},
+				{"name":"models/gemini-3.1-flash"},
+				{"name":"models/gemini-3.1-flash-lite"},
+				{"name":"models/gemini-3.1-flash-lite-preview"},
+				{"name":"models/gemini-3.1-pro"},
+				{"name":"models/gemini-3.1-pro-high"},
+				{"name":"models/gemini-3.1-pro-low"},
+				{"name":"models/gemini-3.1-pro-preview"},
+				{"name":"models/gemini-3.1-pro-preview-low"}
+			]}`)),
+		},
+		{
+			StatusCode: http.StatusOK,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{}`)),
+		},
+	}}
+	repo := &upstreamModelMetadataRepoStub{}
+	svc := &AccountTestService{accountRepo: repo, httpUpstream: upstream, cfg: upstreamModelSyncTestConfig()}
+
+	catalog, err := svc.SyncUpstreamModelCatalog(context.Background(), &Account{
+		ID: 105, Platform: PlatformGemini, Type: AccountTypeAPIKey,
+		Credentials: map[string]any{"api_key": "key", "base_url": "https://aiwahaha.lol/"},
+	})
+	require.NoError(t, err)
+	require.Empty(t, catalog.Warnings)
+	require.Len(t, catalog.Models, 20)
+	require.Len(t, catalog.Metadata, 20)
+	require.Equal(t, []string{"text", "image"}, catalog.Metadata["gemini-3.1-pro-preview-low"].InputModalities)
+	require.Equal(t, "low", catalog.Metadata["gemini-3.1-pro-preview-low"].DefaultReasoningLevel)
+	require.True(t, *catalog.Metadata["gemini-3.1-pro-preview-low"].Reasoning)
+	require.False(t, *catalog.Metadata["gemini-2.5-flash-nothinking"].Reasoning)
+	require.NotNil(t, repo.updates)
+}
+
 func TestSyncUpstreamModelCatalogDoesNotUseConfiguredModelsForRealUpstreamFailures(t *testing.T) {
 	tests := []struct {
 		name       string

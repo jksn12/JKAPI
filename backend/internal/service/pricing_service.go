@@ -657,12 +657,21 @@ func (s *PricingService) GetModelPricing(modelName string) *LiteLLMModelPricing 
 		return pricing
 	}
 
-	// 4. 基于模型系列匹配（Claude）
+	// 4. Gemini 上游经常把同一公开模型拆成 thinking/high/low/agent 等别名。
+	// 这些别名本身不是独立价卡；优先回落到已知基名，避免模型广场显示 "- /1M Token"。
+	for _, normalized := range geminiModelPricingCandidates(lookupCandidates[0]) {
+		if pricing, ok := s.pricingData[normalized]; ok {
+			logger.LegacyPrintf("service.pricing", "[Pricing] Gemini fallback matched %s -> %s", lookupCandidates[0], normalized)
+			return pricing
+		}
+	}
+
+	// 5. 基于模型系列匹配（Claude）
 	if pricing := s.matchByModelFamily(lookupCandidates[0]); pricing != nil {
 		return pricing
 	}
 
-	// 5. OpenAI 模型回退策略
+	// 6. OpenAI 模型回退策略
 	if strings.HasPrefix(lookupCandidates[0], "gpt-") {
 		return s.matchOpenAIModel(lookupCandidates[0])
 	}
@@ -795,6 +804,85 @@ func normalizeModelNameForPricing(model string) string {
 		return canonical
 	}
 	return normalizeGeminiThinkingTierAlias(model)
+}
+
+func normalizeKnownGeminiModel(model string) string {
+	candidates := geminiModelPricingCandidates(model)
+	if len(candidates) > 0 {
+		return candidates[0]
+	}
+	return ""
+}
+
+func geminiModelPricingCandidates(model string) []string {
+	model = strings.ToLower(strings.TrimSpace(model))
+	model = strings.TrimLeft(model, "/")
+	model = strings.TrimPrefix(model, "models/")
+	model = strings.TrimPrefix(model, "publishers/google/models/")
+	if idx := strings.LastIndex(model, "/publishers/google/models/"); idx != -1 {
+		model = model[idx+len("/publishers/google/models/"):]
+	}
+	if idx := strings.LastIndex(model, "/models/"); idx != -1 {
+		model = model[idx+len("/models/"):]
+	}
+	model = strings.TrimLeft(model, "/")
+	model = normalizeGeminiThinkingTierAlias(model)
+
+	knownBases := []string{
+		"gemini-3.7-flash",
+		"gemini-3.7-pro",
+		"gemini-3.5-flash-lite",
+		"gemini-3.5-flash",
+		"gemini-3.5-pro",
+		"gemini-3.1-flash-lite-preview",
+		"gemini-3.1-flash-lite",
+		"gemini-3.1-flash-live-preview",
+		"gemini-3.1-flash",
+		"gemini-3.1-pro-preview",
+		"gemini-3.1-pro-high",
+		"gemini-3.1-pro-low",
+		"gemini-3.1-pro",
+		"gemini-3.6-flash",
+		"gemini-3-flash-preview",
+		"gemini-3-flash",
+		"gemini-3-pro-preview",
+		"gemini-3-pro-image-preview",
+		"gemini-3-pro-image",
+		"gemini-3-pro",
+		"gemini-2.5-flash-lite",
+		"gemini-2.5-flash",
+		"gemini-2.5-pro",
+		"gemini-2.0-flash-lite",
+		"gemini-2.0-flash",
+		"gemini-2.0-pro",
+		"gemini-1.5-flash",
+		"gemini-1.5-pro",
+		"gemini-pro-latest",
+		"gemini-pro",
+	}
+	candidates := make([]string, 0, 2)
+	for _, base := range knownBases {
+		if model == base || strings.HasPrefix(model, base+"-") {
+			candidates = append(candidates, base)
+		}
+	}
+	if strings.HasPrefix(model, "gemini-pro-") {
+		candidates = append(candidates, "gemini-pro-latest", "gemini-pro")
+	}
+
+	seen := make(map[string]struct{}, len(candidates))
+	out := make([]string, 0, len(candidates))
+	for _, candidate := range candidates {
+		if candidate == "" {
+			continue
+		}
+		if _, ok := seen[candidate]; ok {
+			continue
+		}
+		seen[candidate] = struct{}{}
+		out = append(out, candidate)
+	}
+	return out
 }
 
 // normalizeGeminiThinkingTierAlias maps Antigravity's Gemini 3.6 Flash

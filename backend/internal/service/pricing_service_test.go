@@ -488,6 +488,34 @@ func TestPricingService_Gemini36FlashTierSpecificPricingTakesPrecedence(t *testi
 	require.Same(t, tierPricing, svc.GetModelPricing("models/gemini-3.6-flash-low"))
 }
 
+func TestPricingService_GeminiVariantAliasesUseBasePricing(t *testing.T) {
+	gemini37Flash := &LiteLLMModelPricing{InputCostPerToken: 1e-6, OutputCostPerToken: 4e-6}
+	gemini35Flash := &LiteLLMModelPricing{InputCostPerToken: 0.8e-6, OutputCostPerToken: 3.2e-6}
+	geminiProLatest := &LiteLLMModelPricing{InputCostPerToken: 1.25e-6, OutputCostPerToken: 5e-6}
+	svc := &PricingService{pricingData: map[string]*LiteLLMModelPricing{
+		"gemini-3.7-flash":  gemini37Flash,
+		"gemini-3.5-flash":  gemini35Flash,
+		"gemini-pro-latest": geminiProLatest,
+	}}
+
+	for _, tt := range []struct {
+		model string
+		want  *LiteLLMModelPricing
+	}{
+		{model: "gemini-3.7-flash-thinking", want: gemini37Flash},
+		{model: "gemini-3.7-flash-medium", want: gemini37Flash},
+		{model: "gemini-3.7-flash-low", want: gemini37Flash},
+		{model: "gemini-3.7-flash-high", want: gemini37Flash},
+		{model: "models/gemini-3.5-flash-exp", want: gemini35Flash},
+		{model: "publishers/google/models/gemini-3.5-flash-lite", want: gemini35Flash},
+		{model: "projects/demo/locations/us/publishers/google/models/gemini-pro-agent", want: geminiProLatest},
+	} {
+		t.Run(tt.model, func(t *testing.T) {
+			require.Same(t, tt.want, svc.GetModelPricing(tt.model))
+		})
+	}
+}
+
 func TestBillingService_Gemini36FlashThinkingTierFallbacksAreBillable(t *testing.T) {
 	svc := NewBillingService(&config.Config{}, nil)
 	tokens := UsageTokens{InputTokens: 1_000_000, OutputTokens: 1_000_000, CacheReadTokens: 1_000_000}

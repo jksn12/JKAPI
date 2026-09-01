@@ -45,16 +45,17 @@ describe('AppSidebar scroll position persistence', () => {
 })
 
 describe('AppSidebar model plaza navigation', () => {
-  it('does not render model plaza as a sidebar user nav item', () => {
-    expect(componentSource).not.toContain('const flagModelPlaza = makeSidebarFlag(FeatureFlags.modelPlaza)')
-    expect(componentSource).not.toContain("{ path: '/model-plaza', label: t('nav.modelPlaza')")
+  it('renders model plaza as the consolidated sidebar user nav item', () => {
+    expect(componentSource).toContain('const flagModelPlaza = makeSidebarFlag(FeatureFlags.modelPlaza)')
+    expect(componentSource).toContain("{ path: '/model-plaza', query: { embedded: '1' }, label: t('nav.modelPlaza')")
+    expect(componentSource).not.toContain("{ path: '/available-channels', label: t('nav.availableChannels')")
+    expect(componentSource).not.toContain("{ path: '/monitor', label: t('nav.channelStatus')")
   })
 
-  it('keeps model plaza in the header behind the public feature flag', () => {
-    expect(headerSource).toContain('const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))')
-    expect(headerSource).toContain('v-if="authStore.isAuthenticated && modelPlazaEnabled"')
-    expect(headerSource).not.toContain('v-if="user && modelPlazaEnabled && authStore.isAdmin"')
-    expect(headerSource).toContain(":to=\"{ path: '/model-plaza', query: { embedded: '1' } }\"")
+  it('does not duplicate model plaza in the header', () => {
+    expect(headerSource).not.toContain('modelPlazaEnabled')
+    expect(headerSource).not.toContain('FeatureFlags.modelPlaza')
+    expect(headerSource).not.toContain("path: '/model-plaza'")
     expect(headerSource).not.toContain('modelPlazaHeaderTarget')
     expect(headerSource).not.toContain('`/custom/${customItem.id}`')
   })

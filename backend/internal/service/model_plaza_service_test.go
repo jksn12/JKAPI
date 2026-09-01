@@ -16,7 +16,7 @@ func newPlazaService(channels []Channel, groups []Group, pricing *PricingService
 	repo := &mockChannelRepository{
 		listAllFn: func(ctx context.Context) ([]Channel, error) { return channels, nil },
 	}
-	return NewModelPlazaService(repo, &stubGroupRepoForAvailable{activeGroups: groups}, pricing, nil, nil)
+	return NewModelPlazaService(repo, &stubGroupRepoForAvailable{activeGroups: groups}, nil, pricing, nil, nil)
 }
 
 func plazaPricedChannel(id int64, name string, groupIDs []int64, platform string, models ...string) Channel {
@@ -33,6 +33,44 @@ func plazaPricedChannel(id int64, name string, groupIDs []int64, platform string
 			OutputPrice: testPtrFloat64(1.5e-5),
 		}},
 	}
+}
+
+type plazaAccountRepoStub struct {
+	byGroup map[int64][]Account
+	err     error
+}
+
+func (s *plazaAccountRepoStub) ListByGroup(ctx context.Context, groupID int64) ([]Account, error) {
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.byGroup[groupID], nil
+}
+
+func newPlazaServiceWithAccounts(channels []Channel, groups []Group, accounts map[int64][]Account, pricing *PricingService, billing bool) *ModelPlazaService {
+	repo := &mockChannelRepository{
+		listAllFn: func(ctx context.Context) ([]Channel, error) { return channels, nil },
+		getGroupPlatformsFn: func(ctx context.Context, groupIDs []int64) (map[int64]string, error) {
+			out := make(map[int64]string, len(groupIDs))
+			for _, gid := range groupIDs {
+				for _, g := range groups {
+					if g.ID == gid {
+						out[gid] = g.Platform
+						break
+					}
+				}
+			}
+			return out, nil
+		},
+	}
+	var bs *BillingService
+	var resolver *ModelPricingResolver
+	if billing {
+		cs := NewChannelService(repo, nil, nil, nil)
+		bs = NewBillingService(&config.Config{}, pricing)
+		resolver = NewModelPricingResolver(cs, bs)
+	}
+	return NewModelPlazaService(repo, &stubGroupRepoForAvailable{activeGroups: groups}, &plazaAccountRepoStub{byGroup: accounts}, pricing, bs, resolver)
 }
 
 func TestListPlazaGroups_GroupCentricAggregation(t *testing.T) {
@@ -55,6 +93,48 @@ func TestListPlazaGroups_GroupCentricAggregation(t *testing.T) {
 	// 组内模型按名称排序
 	require.Equal(t, "claude-opus", out[0].Models[0].Name)
 	require.Equal(t, "claude-sonnet", out[0].Models[1].Name)
+}
+
+func TestListPlazaGroups_UsesSyncedAccountModelsAndDeduplicates(t *testing.T) {
+	pricingSvc := newStubPricingServiceFromMap(map[string]*LiteLLMModelPricing{
+		"gpt-image-2": {Mode: "image_generation", TokenPricingAbsent: true, OutputCostPerImage: 0.04, InputCostPerImageToken: 8e-6, OutputCostPerImageToken: 3e-5},
+	})
+	channels := []Channel{plazaPricedChannel(1, "ch", []int64{10}, PlatformOpenAI, "gpt-5.4")}
+	groups := []Group{{ID: 10, Name: "g", Platform: PlatformOpenAI, RateMultiplier: 0.3}}
+	accounts := map[int64][]Account{10: {
+		{ID: 1, Platform: PlatformOpenAI, Status: StatusActive, Schedulable: true, Credentials: map[string]any{
+			"model_mapping": map[string]any{
+				"gpt-5.4":     "gpt-5.4",
+				"gpt-image-2": "gpt-image-2",
+			},
+		}},
+		{ID: 2, Platform: PlatformOpenAI, Status: StatusActive, Schedulable: true, Credentials: map[string]any{
+			"model_mapping": map[string]any{
+				"gpt-image-2": "gpt-image-2",
+				"gpt-5.6-sol": "gpt-5.6-sol",
+			},
+		}},
+	}}
+
+	out, err := newPlazaServiceWithAccounts(channels, groups, accounts, pricingSvc, true).ListGroups(context.Background())
+
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	require.Len(t, out[0].Models, 3, "账号同步模型应全部展示，重复模型只显示一个，不能被渠道手填模型限制")
+	byName := plazaModelsByName(out[0].Models)
+	require.Contains(t, byName, "gpt-5.4")
+	require.Contains(t, byName, "gpt-5.6-sol")
+	require.Contains(t, byName, "gpt-image-2")
+	require.Equal(t, 3, out[0].Channels[0].ModelCount)
+	imagePricing := byName["gpt-image-2"].Pricing
+	require.NotNil(t, imagePricing)
+	require.Equal(t, BillingModeImage, imagePricing.BillingMode)
+	require.NotNil(t, imagePricing.PerRequestPrice)
+	require.NotNil(t, imagePricing.ImageInputPrice)
+	require.NotNil(t, imagePricing.ImageOutputPrice)
+	require.InDelta(t, 0.04, *imagePricing.PerRequestPrice, 1e-12)
+	require.InDelta(t, 8e-6, *imagePricing.ImageInputPrice, 1e-12)
+	require.InDelta(t, 3e-5, *imagePricing.ImageOutputPrice, 1e-12)
 }
 
 func TestListPlazaGroups_DedupFirstWinsWithPricingUpgrade(t *testing.T) {
@@ -316,7 +396,7 @@ func TestListPlazaGroups_RepoErrorsPropagate(t *testing.T) {
 	repo := &mockChannelRepository{
 		listAllFn: func(ctx context.Context) ([]Channel, error) { return nil, sentinel },
 	}
-	svc := NewModelPlazaService(repo, &stubGroupRepoForAvailable{}, nil, nil, nil)
+	svc := NewModelPlazaService(repo, &stubGroupRepoForAvailable{}, nil, nil, nil, nil)
 	out, err := svc.ListGroups(context.Background())
 	require.Nil(t, out)
 	require.ErrorIs(t, err, sentinel)
@@ -324,7 +404,7 @@ func TestListPlazaGroups_RepoErrorsPropagate(t *testing.T) {
 	svc2 := NewModelPlazaService(
 		&mockChannelRepository{listAllFn: func(ctx context.Context) ([]Channel, error) { return nil, nil }},
 		&stubGroupRepoForAvailable{listActiveErr: sentinel},
-		nil, nil, nil,
+		nil, nil, nil, nil,
 	)
 	out2, err2 := svc2.ListGroups(context.Background())
 	require.Nil(t, out2)
@@ -341,7 +421,7 @@ func newPlazaServiceWithBilling(channels []Channel, groups []Group, groupPlatfor
 	}
 	cs := NewChannelService(repo, nil, nil, nil)
 	bs := NewBillingService(&config.Config{}, catalog)
-	return NewModelPlazaService(repo, &stubGroupRepoForAvailable{activeGroups: groups}, catalog, bs, NewModelPricingResolver(cs, bs))
+	return NewModelPlazaService(repo, &stubGroupRepoForAvailable{activeGroups: groups}, nil, catalog, bs, NewModelPricingResolver(cs, bs))
 }
 
 func plazaModelsByName(models []PlazaModel) map[string]PlazaModel {

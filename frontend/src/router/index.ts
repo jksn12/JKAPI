@@ -295,7 +295,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/available-channels',
     name: 'UserAvailableChannels',
-    component: () => import('@/views/user/AvailableChannelsView.vue'),
+    redirect: { path: '/model-plaza', query: { embedded: '1' } },
     meta: {
       requiresAuth: true,
       requiresAdmin: false,
@@ -520,7 +520,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/monitor',
     name: 'ChannelStatus',
-    component: () => import('@/views/user/ChannelStatusView.vue'),
+    redirect: { path: '/model-plaza', query: { embedded: '1' } },
     meta: {
       requiresAuth: true,
       requiresAdmin: false,

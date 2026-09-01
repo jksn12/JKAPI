@@ -187,6 +187,20 @@
                 </span>
                 <span class="ml-1 text-xs text-gray-400 dark:text-dark-500">{{ perUnitSuffix(m) }}</span>
               </template>
+              <template v-else-if="m.pricing?.image_input_price != null || m.pricing?.image_output_price != null">
+                <div class="space-y-1 font-mono text-xs font-semibold text-gray-900 dark:text-gray-50">
+                  <div v-if="m.pricing?.image_input_price != null">
+                    <span class="mr-1 font-sans font-normal text-gray-400 dark:text-dark-500">{{ t('modelPlaza.table.imageInput') }}</span>
+                    {{ paidPerMillion(m.pricing.image_input_price, period) }}
+                    <span class="ml-1 font-sans font-normal text-gray-400 dark:text-dark-500">{{ t('modelPlaza.table.unitPerMillion') }}</span>
+                  </div>
+                  <div v-if="m.pricing?.image_output_price != null">
+                    <span class="mr-1 font-sans font-normal text-gray-400 dark:text-dark-500">{{ t('modelPlaza.table.imageOutput') }}</span>
+                    {{ paidPerMillion(m.pricing.image_output_price, period) }}
+                    <span class="ml-1 font-sans font-normal text-gray-400 dark:text-dark-500">{{ t('modelPlaza.table.unitPerMillion') }}</span>
+                  </div>
+                </div>
+              </template>
               <span v-else class="text-gray-400 dark:text-dark-500">-</span>
             </td>
           </template>

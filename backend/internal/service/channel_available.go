@@ -182,6 +182,7 @@ func synthesizePricingFromLiteLLM(lp *LiteLLMModelPricing, existing *ChannelMode
 		return &ChannelModelPricing{
 			BillingMode:      mode,
 			PerRequestPrice:  nonZeroPtr(lp.OutputCostPerImage),
+			ImageInputPrice:  nonZeroPtr(lp.InputCostPerImageToken),
 			ImageOutputPrice: nonZeroPtr(lp.OutputCostPerImageToken),
 			InputPrice:       nonZeroPtr(lp.InputCostPerToken),
 			OutputPrice:      nonZeroPtr(lp.OutputCostPerToken),
@@ -193,6 +194,7 @@ func synthesizePricingFromLiteLLM(lp *LiteLLMModelPricing, existing *ChannelMode
 		OutputPrice:      nonZeroPtr(lp.OutputCostPerToken),
 		CacheWritePrice:  nonZeroPtr(lp.CacheCreationInputTokenCost),
 		CacheReadPrice:   nonZeroPtr(lp.CacheReadInputTokenCost),
+		ImageInputPrice:  nonZeroPtr(lp.InputCostPerImageToken),
 		ImageOutputPrice: nonZeroPtr(lp.OutputCostPerImageToken),
 	}
 }

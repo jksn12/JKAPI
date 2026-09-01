@@ -628,6 +628,8 @@ export default {
       model: '模型',
       input: '输入',
       output: '输出',
+      imageInput: '图片输入',
+      imageOutput: '图片输出',
       cache: '缓存',
       cacheWrite: '写入',
       cacheRead: '读取',

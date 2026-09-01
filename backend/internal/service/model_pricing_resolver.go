@@ -194,11 +194,17 @@ func (r *ModelPricingResolver) lookupChannelPricingNormalized(ctx context.Contex
 	if pricing := r.channelService.GetChannelModelPricing(ctx, groupID, model); pricing != nil {
 		return pricing
 	}
-	normalized := normalizeKnownOpenAICodexModel(model)
-	if normalized == "" || strings.EqualFold(normalized, strings.TrimSpace(model)) {
-		return nil
+	candidates := []string{normalizeKnownOpenAICodexModel(model)}
+	candidates = append(candidates, geminiModelPricingCandidates(model)...)
+	for _, normalized := range candidates {
+		if normalized == "" || strings.EqualFold(normalized, strings.TrimSpace(model)) {
+			continue
+		}
+		if pricing := r.channelService.GetChannelModelPricing(ctx, groupID, normalized); pricing != nil {
+			return pricing
+		}
 	}
-	return r.channelService.GetChannelModelPricing(ctx, groupID, normalized)
+	return nil
 }
 
 // applyChannelOverrides 应用渠道定价覆盖

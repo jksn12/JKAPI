@@ -266,6 +266,7 @@ func TestFillGlobalPricingFallback_EmptyPricingFillsFromLiteLLM(t *testing.T) {
 	pricingSvc := newStubPricingServiceFromMap(map[string]*LiteLLMModelPricing{
 		"gpt-image-1": {
 			Mode:                    "image_generation",
+			InputCostPerImageToken:  8e-6,
 			OutputCostPerImageToken: 4e-5,
 		},
 	})
@@ -284,7 +285,9 @@ func TestFillGlobalPricingFallback_EmptyPricingFillsFromLiteLLM(t *testing.T) {
 	fillGlobalPricingFallback(svc.pricingService, models)
 	require.NotNil(t, models[0].Pricing)
 	require.Equal(t, BillingModeImage, models[0].Pricing.BillingMode)
+	require.NotNil(t, models[0].Pricing.ImageInputPrice)
 	require.NotNil(t, models[0].Pricing.ImageOutputPrice)
+	require.InDelta(t, 8e-6, *models[0].Pricing.ImageInputPrice, 1e-12)
 	require.InDelta(t, 4e-5, *models[0].Pricing.ImageOutputPrice, 1e-12)
 }
 

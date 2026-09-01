@@ -478,6 +478,47 @@ func TestAccountHandlerSyncUpstreamModels_UpstreamErrorDoesNotExposeBody(t *test
 	require.NotContains(t, rec.Body.String(), "SECRET_TOKEN")
 }
 
+func TestAccountHandlerSyncUpstreamModels_UsesSubmittedModelsWhenUpstreamFails(t *testing.T) {
+	svc := &availableModelsAdminService{
+		stubAdminService: newStubAdminService(),
+		account: service.Account{
+			ID:       47,
+			Name:     "kimi-anthropic-router",
+			Platform: service.PlatformAnthropic,
+			Type:     service.AccountTypeAPIKey,
+			Status:   service.StatusActive,
+			Credentials: map[string]any{
+				"api_key":  "anthropic-key",
+				"base_url": "https://aiwahaha.lol/",
+			},
+		},
+	}
+	upstream := &syncUpstreamHTTPUpstream{resp: &http.Response{
+		StatusCode: http.StatusUnauthorized,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(`{"error":"invalid key"}`)),
+	}}
+	router := setupSyncUpstreamModelsRouter(svc, upstream)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/admin/accounts/47/models/sync-upstream",
+		strings.NewReader(`{"models":["kimi-k2.5","kimi-k2.6","kimi-k2.7-code","kimi-k3"]}`),
+	)
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	var resp struct {
+		Data service.UpstreamModelCatalog `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &resp))
+	require.Equal(t, []string{"kimi-k2.5", "kimi-k2.6", "kimi-k2.7-code", "kimi-k3"}, resp.Data.Models)
+	require.Empty(t, resp.Data.Warnings)
+	require.Equal(t, "high", resp.Data.Metadata["kimi-k3"].DefaultReasoningLevel)
+}
+
 // Scenario: 能力补全失败显示部分成功。
 func TestAccountHandlerSyncUpstreamModels_MetadataEnrichmentFailureReturnsWarning(t *testing.T) {
 	svc := &availableModelsAdminService{

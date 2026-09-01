@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -202,7 +203,7 @@ func (s *AccountTestService) SyncUpstreamModelCatalog(ctx context.Context, accou
 	models, body, err := s.fetchUpstreamModelList(ctx, account)
 	if err != nil {
 		configuredModels := configuredUpstreamModelsForCapabilitySync(account)
-		if !upstreamModelListEndpointUnsupported(err) || len(configuredModels) == 0 {
+		if !upstreamModelListAllowsConfiguredFallback(err) || len(configuredModels) == 0 {
 			return nil, err
 		}
 		models = configuredModels
@@ -241,6 +242,14 @@ func (s *AccountTestService) SyncUpstreamModelCatalog(ctx context.Context, accou
 				"error", registryErr,
 			)
 		}
+		for modelID, fallback := range configuredCodexModelMetadata(models) {
+			current := catalog.Metadata[modelID]
+			merged, changed := mergeUpstreamModelMetadata(current, fallback)
+			catalog.Metadata[modelID] = merged
+			if changed {
+				source = "configured"
+			}
+		}
 	}
 
 	if upstreamCatalogNeedsRegistry(models, catalog.Metadata) {
@@ -276,6 +285,28 @@ func upstreamModelSyncStatusCode(err error) int {
 func upstreamModelListEndpointUnsupported(err error) bool {
 	statusCode := upstreamModelSyncStatusCode(err)
 	return statusCode == http.StatusNotFound || statusCode == http.StatusMethodNotAllowed
+}
+
+func upstreamModelListAllowsConfiguredFallback(err error) bool {
+	if upstreamModelListEndpointUnsupported(err) {
+		return true
+	}
+	var syncErr *UpstreamModelSyncError
+	if !errors.As(err, &syncErr) {
+		return false
+	}
+	if syncErr.Kind == UpstreamModelSyncErrorUpstream {
+		return true
+	}
+	if syncErr.StatusCode == http.StatusBadRequest {
+		return true
+	}
+	if syncErr.StatusCode != 0 {
+		return false
+	}
+	message := strings.ToLower(strings.TrimSpace(syncErr.Message))
+	return strings.Contains(message, "returned no supported models") ||
+		strings.Contains(message, "not valid json")
 }
 
 func configuredUpstreamModelsForCapabilitySync(account *Account) []string {
@@ -390,10 +421,32 @@ func (s *AccountTestService) fetchModelsDevMetadata(
 		return nil, err
 	}
 	provider, ok := matchModelsDevProvider(registry, upstreamModelRegistryBaseURL(account))
-	if !ok {
-		return nil, fmt.Errorf("no model metadata provider matches account base URL")
+	if ok {
+		return modelsDevMetadataFromProvider(provider, modelIDs), nil
 	}
 
+	metadata := make(map[string]UpstreamModelMetadata)
+	providerIDs := make([]string, 0, len(registry))
+	for providerID := range registry {
+		providerIDs = append(providerIDs, providerID)
+	}
+	sort.Strings(providerIDs)
+	for _, providerID := range providerIDs {
+		provider := registry[providerID]
+		for modelID, entry := range modelsDevMetadataFromProvider(provider, modelIDs) {
+			if _, exists := metadata[modelID]; exists {
+				continue
+			}
+			metadata[modelID] = entry
+		}
+	}
+	if len(metadata) == 0 {
+		return nil, fmt.Errorf("no model metadata provider matches account base URL")
+	}
+	return metadata, nil
+}
+
+func modelsDevMetadataFromProvider(provider modelsDevProvider, modelIDs []string) map[string]UpstreamModelMetadata {
 	metadata := make(map[string]UpstreamModelMetadata)
 	for _, modelID := range modelIDs {
 		modelID = strings.TrimSpace(modelID)
@@ -415,7 +468,167 @@ func (s *AccountTestService) fetchModelsDevMetadata(
 			metadata[modelID] = entry
 		}
 	}
-	return metadata, nil
+	return metadata
+}
+
+func configuredCodexModelMetadata(modelIDs []string) map[string]UpstreamModelMetadata {
+	metadata := make(map[string]UpstreamModelMetadata)
+	for _, modelID := range modelIDs {
+		modelID = strings.TrimSpace(modelID)
+		if modelID == "" || !supportsConfiguredCodexModelMetadata(modelID) {
+			continue
+		}
+		if isGeminiCompatUpstreamCapabilityFallbackModel(modelID) {
+			entry := upstreamMetadataFromGeminiCompatModel(modelID)
+			if upstreamModelMetadataIsUseful(entry) {
+				metadata[modelID] = entry
+			}
+			continue
+		}
+		if isKimiCompatUpstreamCapabilityFallbackModel(modelID) {
+			entry := upstreamMetadataFromKimiCompatModel(modelID)
+			if upstreamModelMetadataIsUseful(entry) {
+				metadata[modelID] = entry
+			}
+			continue
+		}
+		entry := upstreamMetadataFromConfiguredCodexDescriptor(modelID, newConfiguredCodexModelDescriptor(modelID))
+		if upstreamModelMetadataIsUseful(entry) {
+			metadata[modelID] = entry
+		}
+	}
+	return metadata
+}
+
+func supportsConfiguredCodexModelMetadata(modelID string) bool {
+	modelID = strings.TrimSpace(modelID)
+	if modelID == "" {
+		return false
+	}
+	return isOfficialOpenAICodexCatalogModel(modelID) ||
+		isOpenAICompatUpstreamCapabilityFallbackModel(modelID) ||
+		isGeminiCompatUpstreamCapabilityFallbackModel(modelID) ||
+		isKimiCompatUpstreamCapabilityFallbackModel(modelID) ||
+		isClaudeCodexModel(modelID) ||
+		isGrokCodexModel(modelID) ||
+		isDeepSeekCodexModel(modelID)
+}
+
+func upstreamMetadataFromConfiguredCodexDescriptor(modelID string, descriptor configuredCodexModelDescriptor) UpstreamModelMetadata {
+	levels := make([]string, 0, len(descriptor.SupportedReasoningLevels))
+	for _, level := range descriptor.SupportedReasoningLevels {
+		levels = append(levels, level.Effort)
+	}
+	levels = normalizeReasoningLevels(levels)
+	reasoning := len(levels) > 0 && !(len(levels) == 1 && levels[0] == "none")
+	defaultReasoningLevel := ""
+	if descriptor.DefaultReasoningLevel != nil {
+		defaultReasoningLevel = normalizeReasoningLevel(*descriptor.DefaultReasoningLevel)
+	}
+	if defaultReasoningLevel == "" && len(levels) > 0 {
+		defaultReasoningLevel = levels[0]
+	}
+	inputModalities := normalizeCodexInputModalities(descriptor.InputModalities)
+	if len(inputModalities) == 0 {
+		inputModalities = []string{"text"}
+	}
+	if IsGPTImageGenerationModel(modelID) || isImageGenerationModel(modelID) {
+		inputModalities = []string{"text", "image"}
+	}
+	return UpstreamModelMetadata{
+		ID:                       modelID,
+		DisplayName:              strings.TrimSpace(descriptor.DisplayName),
+		Description:              strings.TrimSpace(descriptor.Description),
+		Reasoning:                &reasoning,
+		DefaultReasoningLevel:    defaultReasoningLevel,
+		SupportedReasoningLevels: levels,
+		InputModalities:          inputModalities,
+		ContextWindow:            descriptor.ContextWindow,
+	}
+}
+
+func isOpenAICompatUpstreamCapabilityFallbackModel(modelID string) bool {
+	normalized := strings.ToLower(codexProviderQualifiedModelID(modelID))
+	if normalized == "" {
+		return false
+	}
+	if strings.HasPrefix(normalized, "gpt-image-") || normalized == "gpt-image" {
+		return true
+	}
+	if strings.HasPrefix(normalized, "gpt-") {
+		return true
+	}
+	if strings.HasPrefix(normalized, "o1") || strings.HasPrefix(normalized, "o3") || strings.HasPrefix(normalized, "o4") {
+		return true
+	}
+	return false
+}
+
+func isGeminiCompatUpstreamCapabilityFallbackModel(modelID string) bool {
+	normalized := strings.ToLower(codexProviderQualifiedModelID(modelID))
+	return strings.HasPrefix(normalized, "gemini-")
+}
+
+func upstreamMetadataFromGeminiCompatModel(modelID string) UpstreamModelMetadata {
+	normalized := strings.ToLower(codexProviderQualifiedModelID(modelID))
+	reasoning := !strings.Contains(normalized, "nothinking")
+	levels := []string{"low", "medium", "high"}
+	defaultReasoningLevel := "medium"
+	switch {
+	case strings.HasSuffix(normalized, "-low") || strings.Contains(normalized, "-low-"):
+		defaultReasoningLevel = "low"
+	case strings.HasSuffix(normalized, "-high") || strings.Contains(normalized, "-high-"):
+		defaultReasoningLevel = "high"
+	}
+	if !reasoning {
+		levels = nil
+		defaultReasoningLevel = "none"
+	}
+	return UpstreamModelMetadata{
+		ID:                       modelID,
+		DisplayName:              modelID,
+		Description:              "Gemini model routed through a compatible upstream.",
+		Reasoning:                &reasoning,
+		DefaultReasoningLevel:    defaultReasoningLevel,
+		SupportedReasoningLevels: levels,
+		InputModalities:          []string{"text", "image"},
+		ContextWindow:            1_048_576,
+		MaxOutputTokens:          65_536,
+	}
+}
+
+func isKimiCompatUpstreamCapabilityFallbackModel(modelID string) bool {
+	normalized := strings.ToLower(codexProviderQualifiedModelID(modelID))
+	return strings.HasPrefix(normalized, "kimi-") ||
+		strings.HasPrefix(normalized, "moonshot-") ||
+		normalized == "k3" ||
+		normalized == "k3-256k"
+}
+
+func upstreamMetadataFromKimiCompatModel(modelID string) UpstreamModelMetadata {
+	normalized := strings.ToLower(codexProviderQualifiedModelID(modelID))
+	reasoning := !strings.Contains(normalized, "nothinking")
+	levels := []string{"high"}
+	defaultReasoningLevel := "high"
+	if !reasoning {
+		levels = nil
+		defaultReasoningLevel = "none"
+	}
+	contextWindow := int64(262_144)
+	if strings.Contains(normalized, "1m") {
+		contextWindow = 1_048_576
+	}
+	return UpstreamModelMetadata{
+		ID:                       modelID,
+		DisplayName:              modelID,
+		Description:              "Kimi/Moonshot model routed through a compatible upstream.",
+		Reasoning:                &reasoning,
+		DefaultReasoningLevel:    defaultReasoningLevel,
+		SupportedReasoningLevels: levels,
+		InputModalities:          []string{"text"},
+		ContextWindow:            contextWindow,
+		MaxOutputTokens:          65_536,
+	}
 }
 
 func (s *AccountTestService) fetchModelsDevRegistry(ctx context.Context, account *Account) (map[string]modelsDevProvider, error) {
@@ -1083,18 +1296,23 @@ type upstreamModelEntryMetadata struct {
 
 type upstreamModelCapabilityEntry struct {
 	upstreamModelEntry
-	DisplayName              string                     `json:"display_name"`
-	Description              string                     `json:"description"`
-	Reasoning                *bool                      `json:"reasoning"`
-	DefaultReasoningLevel    string                     `json:"default_reasoning_level"`
-	SupportedReasoningLevels []json.RawMessage          `json:"supported_reasoning_levels"`
-	ReasoningOptions         []modelsDevReasoningOption `json:"reasoning_options"`
-	InputModalities          []string                   `json:"input_modalities"`
-	Modalities               modelsDevModalities        `json:"modalities"`
-	ContextWindow            int64                      `json:"context_window"`
-	MaxContextWindow         int64                      `json:"max_context_window"`
-	MaxOutputTokens          int64                      `json:"max_output_tokens"`
-	Limit                    modelsDevLimit             `json:"limit"`
+	DisplayName                string                     `json:"display_name"`
+	DisplayNameCamel           string                     `json:"displayName"`
+	Description                string                     `json:"description"`
+	Reasoning                  *bool                      `json:"reasoning"`
+	DefaultReasoningLevel      string                     `json:"default_reasoning_level"`
+	SupportedReasoningLevels   []json.RawMessage          `json:"supported_reasoning_levels"`
+	ReasoningOptions           []modelsDevReasoningOption `json:"reasoning_options"`
+	InputModalities            []string                   `json:"input_modalities"`
+	Modalities                 modelsDevModalities        `json:"modalities"`
+	ContextWindow              int64                      `json:"context_window"`
+	MaxContextWindow           int64                      `json:"max_context_window"`
+	InputTokenLimit            int64                      `json:"inputTokenLimit"`
+	MaxOutputTokens            int64                      `json:"max_output_tokens"`
+	OutputTokenLimit           int64                      `json:"outputTokenLimit"`
+	Limit                      modelsDevLimit             `json:"limit"`
+	SupportedGenerationMethods []string                   `json:"supportedGenerationMethods"`
+	Thinking                   json.RawMessage            `json:"thinking"`
 }
 
 func extractUpstreamModelIDs(body []byte) ([]string, error) {
@@ -1159,13 +1377,22 @@ func upstreamMetadataFromCapabilityEntry(modelID string, entry upstreamModelCapa
 		levels = reasoningLevelsFromModelsDevOptions(entry.ReasoningOptions)
 	}
 	reasoning := entry.Reasoning
+	if reasoning == nil {
+		reasoning = geminiReasoningFromThinking(entry.Thinking)
+	}
 	if reasoning == nil && len(levels) > 0 {
 		inferred := len(levels) != 1 || levels[0] != "none"
 		reasoning = &inferred
 	}
+	if reasoning != nil && *reasoning && len(levels) == 0 && len(entry.Thinking) > 0 {
+		levels = []string{"low", "medium", "high"}
+	}
 	modalities := entry.InputModalities
 	if len(modalities) == 0 {
 		modalities = entry.Modalities.Input
+	}
+	if len(modalities) == 0 && len(entry.SupportedGenerationMethods) > 0 {
+		modalities = []string{"text"}
 	}
 	contextWindow := entry.ContextWindow
 	if contextWindow <= 0 {
@@ -1174,15 +1401,24 @@ func upstreamMetadataFromCapabilityEntry(modelID string, entry upstreamModelCapa
 	if contextWindow <= 0 {
 		contextWindow = entry.Limit.Context
 	}
+	if contextWindow <= 0 {
+		contextWindow = entry.InputTokenLimit
+	}
 	maxOutputTokens := entry.MaxOutputTokens
 	if maxOutputTokens <= 0 {
 		maxOutputTokens = entry.Limit.Output
+	}
+	if maxOutputTokens <= 0 {
+		maxOutputTokens = entry.OutputTokenLimit
 	}
 	defaultReasoningLevel := normalizeReasoningLevel(entry.DefaultReasoningLevel)
 	if defaultReasoningLevel == "" && len(levels) > 0 {
 		defaultReasoningLevel = levels[0]
 	}
 	displayName := strings.TrimSpace(entry.DisplayName)
+	if displayName == "" {
+		displayName = strings.TrimSpace(entry.DisplayNameCamel)
+	}
 	if displayName == "" && strings.TrimSpace(entry.Name) != "" && strings.TrimSpace(entry.Name) != modelID {
 		displayName = strings.TrimSpace(entry.Name)
 	}
@@ -1197,6 +1433,23 @@ func upstreamMetadataFromCapabilityEntry(modelID string, entry upstreamModelCapa
 		ContextWindow:            contextWindow,
 		MaxOutputTokens:          maxOutputTokens,
 	}
+}
+
+func geminiReasoningFromThinking(raw json.RawMessage) *bool {
+	raw = json.RawMessage(bytes.TrimSpace(raw))
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		return nil
+	}
+	var enabled bool
+	if err := json.Unmarshal(raw, &enabled); err == nil {
+		return &enabled
+	}
+	var object map[string]any
+	if err := json.Unmarshal(raw, &object); err == nil {
+		enabled = len(object) > 0
+		return &enabled
+	}
+	return nil
 }
 
 func reasoningLevelsFromRawEntries(entries []json.RawMessage) []string {

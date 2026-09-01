@@ -55,6 +55,14 @@ export interface PlazaModel {
   time_pricing?: PlazaTimePricing
 }
 
+export interface PlazaChannel {
+  id: number
+  name: string
+  description: string
+  platform: string
+  model_count: number
+}
+
 export interface ModelPlazaGroup {
   id: number
   name: string
@@ -75,6 +83,7 @@ export interface ModelPlazaGroup {
   image_rate_multiplier: number
   /** 分组是否启用长上下文阶梯计费；false 时实付列只展示最低档，官方阶梯仅供参考。 */
   long_context_pricing_enabled: boolean
+  channels?: PlazaChannel[]
   models: PlazaModel[]
 }
 

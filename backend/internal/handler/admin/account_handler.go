@@ -2763,11 +2763,20 @@ func (h *AccountHandler) SyncUpstreamModels(c *gin.Context) {
 		return
 	}
 
+	var req syncUpstreamModelsRequest
+	if c.Request.ContentLength > 0 {
+		if err := c.ShouldBindJSON(&req); err != nil {
+			response.BadRequest(c, "Invalid request: "+err.Error())
+			return
+		}
+	}
+
 	account, err := h.adminService.GetAccount(c.Request.Context(), accountID)
 	if err != nil {
 		response.NotFound(c, "Account not found")
 		return
 	}
+	account = accountWithSyncModelFallback(account, req.Models, nil)
 
 	if h.accountTestService == nil {
 		response.InternalError(c, "Account test service is not configured")
@@ -2801,21 +2810,12 @@ func (h *AccountHandler) SyncUpstreamModels(c *gin.Context) {
 // SyncUpstreamModelsPreview handles syncing live supported models using provided credentials (no account ID needed).
 // POST /api/v1/admin/accounts/models/sync-upstream-preview
 func (h *AccountHandler) SyncUpstreamModelsPreview(c *gin.Context) {
-	var req struct {
-		Platform     string            `json:"platform" binding:"required"`
-		Type         string            `json:"type" binding:"required"`
-		BaseURL      string            `json:"base_url"`
-		APIKey       string            `json:"api_key" binding:"required"`
-		ModelMapping map[string]string `json:"model_mapping"`
-	}
+	var req syncUpstreamModelsPreviewRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "Invalid request: "+err.Error())
 		return
 	}
-	modelMapping := make(map[string]any, len(req.ModelMapping))
-	for sourceModel, upstreamModel := range req.ModelMapping {
-		modelMapping[sourceModel] = upstreamModel
-	}
+	modelMapping := syncModelMappingFromRequest(req.ModelMapping, req.Models)
 
 	tempAccount := &service.Account{
 		Platform: req.Platform,
@@ -2854,6 +2854,67 @@ func (h *AccountHandler) SyncUpstreamModelsPreview(c *gin.Context) {
 	}
 
 	response.Success(c, catalog)
+}
+
+type syncUpstreamModelsRequest struct {
+	Models       []string          `json:"models"`
+	ModelMapping map[string]string `json:"model_mapping"`
+}
+
+type syncUpstreamModelsPreviewRequest struct {
+	Platform     string            `json:"platform" binding:"required"`
+	Type         string            `json:"type" binding:"required"`
+	BaseURL      string            `json:"base_url"`
+	APIKey       string            `json:"api_key" binding:"required"`
+	ModelMapping map[string]string `json:"model_mapping"`
+	Models       []string          `json:"models"`
+}
+
+func accountWithSyncModelFallback(account *service.Account, models []string, modelMapping map[string]string) *service.Account {
+	if account == nil {
+		return nil
+	}
+	merged := syncModelMappingFromRequest(modelMapping, models)
+	if len(merged) == 0 {
+		return account
+	}
+	clone := *account
+	credentials := make(map[string]any, len(account.Credentials)+1)
+	for key, value := range account.Credentials {
+		credentials[key] = value
+	}
+	existing := account.GetModelMapping()
+	for key, value := range existing {
+		if strings.TrimSpace(key) == "" || strings.TrimSpace(value) == "" {
+			continue
+		}
+		merged[key] = value
+	}
+	credentials["model_mapping"] = merged
+	clone.Credentials = credentials
+	return &clone
+}
+
+func syncModelMappingFromRequest(modelMapping map[string]string, models []string) map[string]any {
+	merged := make(map[string]any, len(modelMapping)+len(models))
+	for sourceModel, upstreamModel := range modelMapping {
+		sourceModel = strings.TrimSpace(sourceModel)
+		upstreamModel = strings.TrimSpace(upstreamModel)
+		if sourceModel == "" || upstreamModel == "" {
+			continue
+		}
+		merged[sourceModel] = upstreamModel
+	}
+	for _, model := range models {
+		model = strings.TrimSpace(model)
+		if model == "" || strings.Contains(model, "*") {
+			continue
+		}
+		if _, exists := merged[model]; !exists {
+			merged[model] = model
+		}
+	}
+	return merged
 }
 
 // SetPrivacy handles setting privacy for a single OpenAI/Antigravity OAuth account

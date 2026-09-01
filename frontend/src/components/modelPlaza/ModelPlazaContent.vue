@@ -50,7 +50,12 @@
 
       <!-- 分组分节的模型清单(默认按生效倍率升序) -->
       <div v-if="filteredGroups.length > 0" class="space-y-5">
-        <PlazaGroupSection v-for="g in filteredGroups" :key="g.id" :group="g" />
+        <PlazaChannelSection
+          v-for="g in filteredGroups"
+          :key="g.id"
+          :group="g"
+          :monitor="resolveGroupMonitor(g)"
+        />
       </div>
       <div
         v-else
@@ -69,9 +74,10 @@ import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import Icon from '@/components/icons/Icon.vue'
 import PlazaFilterBar from './PlazaFilterBar.vue'
-import PlazaGroupSection from './PlazaGroupSection.vue'
+import PlazaChannelSection from './PlazaChannelSection.vue'
 import type { ModelPlazaGroup, ModelPlazaResponse } from '@/api/modelPlaza'
 import { useAuthStore } from '@/stores/auth'
+import { list as listChannelMonitorViews, type UserMonitorView } from '@/api/channelMonitor'
 
 const props = defineProps<{
   response: ModelPlazaResponse | null
@@ -89,6 +95,8 @@ const selectedPlatform = ref<string>('all')
 const selectedGroupId = ref<number | 'all'>('all')
 const selectedRate = ref<number | 'all'>('all')
 const searchQuery = ref('')
+const monitorByGroup = ref<Record<string, UserMonitorView>>({})
+const monitorItems = ref<UserMonitorView[]>([])
 
 const searchActive = computed(() => searchQuery.value.trim() !== '')
 
@@ -98,9 +106,9 @@ const descriptionHtml = computed(() => {
   return DOMPurify.sanitize(marked.parse(md) as string)
 })
 
-/** 生效倍率 = 用户专属倍率 ?? 分组默认倍率。 */
+/** 模型广场展示后台分组倍率，不混入当前登录用户的专属扣费倍率。 */
 function effectiveRate(g: ModelPlazaGroup): number {
-  return g.user_rate_multiplier ?? g.rate_multiplier
+  return g.rate_multiplier
 }
 
 const platforms = computed(() =>
@@ -116,7 +124,7 @@ const groupOptions = computed(() =>
   }))
 )
 
-/** 全量生效倍率;当前组合下不可用的项由 FilterBar 置灰而非隐藏。 */
+/** 全量分组倍率;当前组合下不可用的项由 FilterBar 置灰而非隐藏。 */
 const rates = computed(() =>
   [...new Set((props.response?.groups ?? []).map(effectiveRate))].sort((a, b) => a - b)
 )
@@ -127,6 +135,118 @@ watch(rates, (list) => {
     selectedRate.value = 'all'
   }
 })
+
+watch(
+  () => [authStore.isAuthenticated, props.response?.groups.map((g) => g.id).join(',') ?? ''] as const,
+  () => {
+    if (authStore.isAuthenticated && props.response?.groups?.length) {
+      void loadChannelStatusOverlay()
+    } else {
+      monitorByGroup.value = {}
+    }
+  },
+  { immediate: true }
+)
+
+async function loadChannelStatusOverlay() {
+  try {
+    const res = await listChannelMonitorViews()
+    const next: Record<string, UserMonitorView> = {}
+    for (const item of res.items ?? []) {
+      addMonitorAliases(next, item.provider, item.group_name, item)
+      addMonitorAliases(next, item.provider, item.name, item)
+    }
+    monitorByGroup.value = next
+    monitorItems.value = res.items ?? []
+  } catch {
+    monitorByGroup.value = {}
+    monitorItems.value = []
+  }
+}
+
+function resolveGroupMonitor(group: ModelPlazaGroup): UserMonitorView | undefined {
+  const groupMatch = findMonitorByAliases(group.platform, group.name)
+  if (groupMatch) return groupMatch
+
+  for (const channel of group.channels ?? []) {
+    const channelMatch =
+      findMonitorByAliases(channel.platform || group.platform, channel.name) ??
+      findMonitorByAliases(group.platform, channel.name)
+    if (channelMatch) return channelMatch
+  }
+
+  return findUniqueMonitorByPlatform(group.platform)
+}
+
+function addMonitorAliases(
+  target: Record<string, UserMonitorView>,
+  platform: string,
+  name: string,
+  item: UserMonitorView
+) {
+  for (const alias of monitorPlatformAliases(platform)) {
+    addMonitorAlias(target, alias, name, item)
+  }
+}
+
+function addMonitorAlias(
+  target: Record<string, UserMonitorView>,
+  platform: string,
+  name: string,
+  item: UserMonitorView
+) {
+  const key = makeMonitorKey(platform, name)
+  if (!target[key]) target[key] = item
+}
+
+function findMonitorByAliases(platform: string, name: string): UserMonitorView | undefined {
+  for (const alias of monitorPlatformAliases(platform)) {
+    const match = monitorByGroup.value[makeMonitorKey(alias, name)]
+    if (match) return match
+  }
+  return undefined
+}
+
+function findUniqueMonitorByPlatform(platform: string): UserMonitorView | undefined {
+  const normalized = normalizeMonitorPlatform(platform)
+  const matches = monitorItems.value.filter((item) => normalizeMonitorPlatform(item.provider) === normalized)
+  return matches.length === 1 ? matches[0] : undefined
+}
+
+function makeMonitorKey(platform: string, groupName: string): string {
+  return `${normalizeMonitorPlatform(platform)}:${normalizeMonitorText(groupName)}`
+}
+
+function normalizeMonitorPlatform(value: string): string {
+  const raw = normalizeMonitorText(value)
+  if (['xai', 'x-ai', 'x.ai', 'grok'].includes(raw)) return 'grok'
+  if (['google', 'google-ai-studio', 'ai-studio', 'vertex', 'vertexai', 'vertex-ai', 'gemini'].includes(raw)) {
+    return 'gemini'
+  }
+  if (['claude', 'anthropic'].includes(raw)) return 'anthropic'
+  if (['openai-compatible', 'openai'].includes(raw)) return 'openai'
+  return raw
+}
+
+function monitorPlatformAliases(value: string): string[] {
+  const normalized = normalizeMonitorPlatform(value)
+  switch (normalized) {
+    case 'grok':
+      return ['grok', 'xai', 'x-ai', 'x.ai']
+    case 'gemini':
+      return ['gemini', 'google', 'google-ai-studio', 'ai-studio', 'vertex', 'vertexai', 'vertex-ai']
+    case 'anthropic':
+      return ['anthropic', 'claude']
+    case 'openai':
+      return ['openai', 'openai-compatible']
+    default:
+      return [normalized]
+  }
+}
+
+function normalizeMonitorText(value: string): string {
+  return String(value || '').trim().toLowerCase()
+}
 
 const filteredGroups = computed(() => {
   let groups = props.response?.groups ?? []
@@ -146,7 +266,7 @@ const filteredGroups = computed(() => {
       .map((g) => ({ ...g, models: g.models.filter((m) => m.name.toLowerCase().includes(q)) }))
       .filter((g) => g.models.length > 0)
   }
-  // 专属倍率会改变生效值,不能只依赖后端按默认倍率的排序。
+  // 按后台分组倍率排序，保持与渠道/分组报价展示一致。
   return [...groups].sort(
     (a, b) => effectiveRate(a) - effectiveRate(b) || a.name.localeCompare(b.name)
   )

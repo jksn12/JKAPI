@@ -74,6 +74,15 @@ type modelPlazaModel struct {
 	TimePricing *modelPlazaTimePricing `json:"time_pricing,omitempty"`
 }
 
+// modelPlazaChannel 广场渠道/号池摘要。
+type modelPlazaChannel struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Platform    string `json:"platform"`
+	ModelCount  int    `json:"model_count"`
+}
+
 // modelPlazaGroup 广场分组条目（白名单字段）。
 type modelPlazaGroup struct {
 	ID                 int64    `json:"id"`
@@ -93,8 +102,9 @@ type modelPlazaGroup struct {
 	ImageRateIndependent bool    `json:"image_rate_independent"`
 	ImageRateMultiplier  float64 `json:"image_rate_multiplier"`
 	// 分组是否启用长上下文阶梯计费；关闭时模型实付列只展示最低档/基础价。
-	LongContextPricingEnabled bool              `json:"long_context_pricing_enabled"`
-	Models                    []modelPlazaModel `json:"models"`
+	LongContextPricingEnabled bool                `json:"long_context_pricing_enabled"`
+	Channels                  []modelPlazaChannel `json:"channels"`
+	Models                    []modelPlazaModel   `json:"models"`
 }
 
 // modelPlazaResponse 广场页响应。
@@ -106,6 +116,8 @@ type modelPlazaResponse struct {
 // Get 返回模型广场数据。
 // GET /api/v1/model-plaza
 func (h *ModelPlazaHandler) Get(c *gin.Context) {
+	c.Header("Cache-Control", "private, no-store")
+
 	if h.settingService == nil {
 		response.NotFound(c, "Model plaza is not enabled")
 		return
@@ -185,6 +197,17 @@ func filterPlazaVisibleGroups(
 
 // toModelPlazaGroupDTO 将 service 层广场分组映射为白名单 DTO,并合并用户专属倍率。
 func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates map[int64]float64) modelPlazaGroup {
+	channels := make([]modelPlazaChannel, 0, len(g.Channels))
+	for i := range g.Channels {
+		ch := &g.Channels[i]
+		channels = append(channels, modelPlazaChannel{
+			ID:          ch.ID,
+			Name:        ch.Name,
+			Description: ch.Description,
+			Platform:    ch.Platform,
+			ModelCount:  ch.ModelCount,
+		})
+	}
 	models := make([]modelPlazaModel, 0, len(g.Models))
 	for i := range g.Models {
 		m := &g.Models[i]
@@ -212,6 +235,7 @@ func toModelPlazaGroupDTO(g *service.PlazaGroup, userRates map[int64]float64) mo
 		ImageRateIndependent:      g.ImageRateIndependent,
 		ImageRateMultiplier:       g.ImageRateMultiplier,
 		LongContextPricingEnabled: g.LongContextPricingEnabled,
+		Channels:                  channels,
 		Models:                    models,
 	}
 	if rate, ok := userRates[g.ID]; ok {

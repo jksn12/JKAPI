@@ -300,9 +300,12 @@ const syncUpstreamModels = async () => {
   try {
     let result
     if (props.accountId) {
-      result = await accountsAPI.syncUpstreamModels(props.accountId)
+      result = await accountsAPI.syncUpstreamModels(props.accountId, { models: props.modelValue })
     } else if (props.syncCredentials) {
-      result = await accountsAPI.syncUpstreamModelsPreview(props.syncCredentials as SyncUpstreamPreviewParams)
+      result = await accountsAPI.syncUpstreamModelsPreview({
+        ...(props.syncCredentials as SyncUpstreamPreviewParams),
+        models: props.modelValue,
+      })
     } else {
       return
     }
