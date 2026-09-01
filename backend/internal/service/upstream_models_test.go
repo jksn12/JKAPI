@@ -785,7 +785,7 @@ func TestSyncUpstreamModelCatalogUsesGeminiFamilyFallbackForRouterVariants(t *te
 	require.NotNil(t, repo.updates)
 }
 
-func TestSyncUpstreamModelCatalogDoesNotUseConfiguredModelsForRealUpstreamFailures(t *testing.T) {
+func TestSyncUpstreamModelCatalogUsesConfiguredModelsForRealUpstreamFailures(t *testing.T) {
 	tests := []struct {
 		name       string
 		statusCode int
@@ -802,7 +802,7 @@ func TestSyncUpstreamModelCatalogDoesNotUseConfiguredModelsForRealUpstreamFailur
 			}}
 			svc := &AccountTestService{httpUpstream: upstream, cfg: upstreamModelSyncTestConfig()}
 
-			_, err := svc.SyncUpstreamModelCatalog(context.Background(), &Account{
+			catalog, err := svc.SyncUpstreamModelCatalog(context.Background(), &Account{
 				ID: 98, Platform: PlatformOpenAI, Type: AccountTypeAPIKey,
 				Credentials: map[string]any{
 					"api_key":       "key",
@@ -810,9 +810,10 @@ func TestSyncUpstreamModelCatalogDoesNotUseConfiguredModelsForRealUpstreamFailur
 					"model_mapping": map[string]any{"public-glm": "glm-5.3"},
 				},
 			})
-			require.Error(t, err)
-			require.Len(t, upstream.requests, 1)
-			require.Equal(t, tt.statusCode, upstreamModelSyncStatusCode(err))
+			require.NoError(t, err)
+			require.Equal(t, []string{"glm-5.3"}, catalog.Models)
+			require.Len(t, upstream.requests, 2)
+			require.Equal(t, "https://provider.example/v1/models", upstream.requests[0].URL.String())
 		})
 	}
 }
